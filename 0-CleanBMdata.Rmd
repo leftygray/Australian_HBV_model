@@ -1,0 +1,113 @@
+# Clean HBV model input data sets
+# ===============================
+
+Authors: Richard T. Gray, Neil Bretana
+
+This script is used to load the data sets used in the original Berkely 
+Madonna HBV model and save them in a tidy data frame format for use as 
+input parameters. We do not read in the cumulative notifications file as 
+this can be obtained from notifications. 
+
+This script only needs to be run once to convert data files into the
+format required for the model. 
+
+```{r Initialization}
+# Clear workspace
+rm(list = ls()) 
+
+# Setup directories after setting working directory to source file 
+# directory (so it is easy to move code around)
+basePath <- getwd()
+dataPath <- file.path(basePath, "data") # original data stored in ./BM datasets
+Rcode <- file.path(basePath, "code")
+
+# Load useful libraries
+source(file.path(Rcode, "LoadLibrary.R"))
+LoadLibrary("readr")
+LoadLibrary("dplyr")
+LoadLibrary("tidyr")
+
+# Output file names
+paramFile1 <- "parameters_constant.csv"
+paramFile2 <- "parameters_time_varying.csv"
+
+```
+
+```{r Data set details}
+# This chuck specifies the files and associated variable names of the data 
+# sets. Set up so the variable name and file can be easily extracted or 
+# changed. 
+
+constantsFile <- "Constants.csv"
+
+completeDataFiles <- c("bgmort0to4" = "bgmort 0to4.csv",
+               "bgmort5to14" = "bgmort 5to14.csv",
+               "bgmort15to44"= "bgmort 15to44.csv", 
+               "bgmort45" = "bgmort 45plus.csv",
+               "births" = "births.csv", 
+               "mig0to4chronic" = "mig 0to4 chronic.csv", 
+               "mig0to4cleared" = "mig 0to4 cleared.csv", 
+               "mig0to4sus" = "mig 0to4 sus.csv", 
+               "mig5to14chronic" = "mig 5to14 chronic.csv", 
+               "mig5to14cleared" = "mig 5to14 cleared.csv", 
+               "mig5to14sus" = "mig 5to14 sus.csv", 
+               "mig15to44chronic" = "mig 15to44 chronic.csv", 
+               "mig15to44cleared" = "mig 15to44 cleared.csv", 
+               "mig15to44sus" = "mig 15to44 sus.csv", 
+               "mig45chronic" = "mig 45plus chronic.csv", 
+               "mig45cleared" = "mig 45plus cleared.csv", 
+               "mig45sus" = "mig 45plus sus.csv")
+
+notificationsFile<- c("notifications2014.csv")
+
+```
+
+# Constants
+
+```{r load and save constants}
+constants <- read_csv(file.path(dataPath, "BM datasets", constantsFile))
+constants <-  gather(constants, "parameter", "value", 1:ncol(constants))
+
+write.csv(constants, file.path(dataPath, paramFile1), row.names=FALSE)
+
+```
+
+# Time varying parameters
+
+Note the time varying parameters are stored as simple CSV files. They 
+sometimes contain additional data or other relevant information. We have 
+only the second column. 
+
+```{r Load and save time varying data}
+# This chunk reads in all the BM data files and merges the columns into a 
+# single data frame
+
+numYears <- 100 # 1951:2050
+numCols <- length(completeDataFiles) + 1 # include year column
+
+bmData <- data.frame(matrix(ncol = numCols, nrow = numYears))
+
+# Load the complete data set files and append to our final data frame
+for (file in 1:length(completeDataFiles)) {
+  tempData <- read_csv(file.path(dataPath, "BM datasets", 
+                                 completeDataFiles[file]),
+                       col_names = FALSE)
+  
+  bmData[, file + 1] <- tempData[1:numYears, 2]
+  colnames(bmData)[file + 1] <- names(completeDataFiles)[file]
+}
+
+# Add years to first column
+bmData[, 1] <- tempData[1:numYears, 1]
+colnames(bmData)[1] <- "year"
+
+# Now append notifications
+diags <- read_csv(file.path(dataPath, "BM datasets", notificationsFile),
+         col_names = c("year", "notifications"))
+
+bmData <- left_join(bmData, diags, by = "year")
+
+# Write final data frame to file
+write_csv(bmData, file.path(dataPath, paramFile2))
+
+```
