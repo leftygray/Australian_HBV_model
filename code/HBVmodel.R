@@ -56,12 +56,14 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   allPops <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
   allpops[, , 1] <- initialPop # the first sheet is the initial population
 
-  initResultsMatrix <- matrix(0, nrow = npops, ncol = nstates, 
-                              dimnames = dimNames)
+  #initResultsMatrix <- matrix(0, nrow = npops, ncol = nstates, dimnames = dimNames)
+  initResultsMatrix <- matrix(0, nrow = npops, ncol = npts, dimnames = dimNames)
   newInfections <- initResultsMatrix
-  # newHBVdeaths <- initResultsMatrix
-  # newTreatments <- initResultsMatrix
-  # newCured <- initResultsMatrix
+  newHBVdeaths <- initResultsMatrix
+  newVaccinations <- initResultsMatrix
+  newMigrants <- initResultsMatrix
+  newTreatments <- initResultsMatrix
+  newCured <- initResultsMatrix
   
   # Force of infection calculations ---------------------------------------
   forceInfection <- matrix(0, ncol = 1, nrow = npops)
@@ -74,9 +76,9 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   #prog <- matrix(0, ncol = 4, nrow = 4)
   progress <- matrix(0, ncol = 1, nrow = npops)
   progress[0] <- pm$ac_res_rate * pm$prog_chron_0 #age group 0 to 4
-  progress[1] <- pm$clr_rate_1 * pm$prog_chron_1  #age group 5 to 14
-  progress[2] <- pm$clr_rate_2 * pm$prog_chron_2  #age group 15 to 44
-  progress[3] <- pm$clr_rate_3 * pm$prog_chron_3  #age group 45  
+  progress[1] <- pm$ac_res_rate * pm$prog_chron_1  #age group 5 to 14
+  progress[2] <- pm$ac_res_rate * pm$prog_chron_2  #age group 15 to 44
+  progress[3] <- pm$ac_res_rate * pm$prog_chron_3  #age group 45  
   
   # births differ based on time but only applied to susceptibles and only 
   # to age group 0 so other age groups have to be 0
@@ -87,38 +89,69 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   #bgMortality changes according to time, applied to all age groups but 
   #disregards HBV status
   bgMortality <-  matrix(0, ncol = npops, nrow = npts)
+  bgMortality[, 1] <- pm$bgmort0to4
+  bgMortality[, 2] <- pm$bgmort5to14  
+  bgMortality[, 3] <- pm$bgmort15to44
+  bgMortality[, 4] <- pm$bgmort45
   
-  #hbvMortality differs according to age group and HBV status, disregards time
+  #hbvMortality differs according to age group and HBV status acute and chronic only, disregards time
   hbvMortality <- array(0, c(npops, nstates), dimnames = dimNames)
+  hbvMortality[1,"a"] <- pm$ac_mort_rate0
+  hbvMortality[2,"a"] <- pm$ac_mort_rate1
+  hbvMortality[3,"a"] <- pm$ac_mort_rate2
+  hbvMortality[4,"a"] <- pm$ac_mort_rate3
+  hbvMortality[1,"ch"] <- pm$chr_mort_rate0
+  hbvMortality[2,"ch"] <- pm$chr_mort_rate1
+  hbvMortality[3,"ch"] <- pm$chr_mort_rate2
+  hbvMortality[4,"ch"] <- pm$chr_mort_rate3
   
   #vacc only applies to susceptibles and immune, differs based on age 
   #groups depending on vac_eff, vacc_prop, vacc_prog, and vacc_avail
   #vacc <- matrix(0, ncol = npops, nrow = 1)
   #vacc <- array(0, c(npops, nstates), dimnames = dimNames) 
-  vacc <- matrix(0, ncol = 1, nrow = 4)
-  vacc[0] <- vacc_eff_0*vacc_prop_0*vacc_prog*0*vacc_avail #age group 0 to 4
-  vacc[1] <- vacc_eff_1*vacc_prop_1*vacc_prog*1*vacc_avail #age group 5 to 14
-  vacc[2] <- vacc_eff_2*vacc_prop_2*vacc_prog*2*vacc_avail #age group 15 to 44
-  vacc[3] <- vacc_eff_3*vacc_prop_3*vacc_prog*3*vacc_avail #age group 45 
+  vacc <- matrix(0, ncol = 1, nrow = npops)
+  vacc[0] <- pm$vacc_eff_0*pm$vacc_prop_0*pm$vacc_prog*0*pm$vacc_avail #age group 0 to 4
+  vacc[1] <- pm$vacc_eff_1*pm$vacc_prop_1*pm$vacc_prog*1*pm$vacc_avail #age group 5 to 14
+  vacc[2] <- pm$vacc_eff_2*pm$vacc_prop_2*pm$vacc_prog*2*pm$vacc_avail #age group 15 to 44
+  vacc[3] <- pm$vacc_eff_3*pm$vacc_prop_3*pm$vacc_prog*3*pm$vacc_avail #age group 45 
   
-  #migration proportions differ based on age group, HBV status, and time
+  #migration proportions differ based on age group, HBV status, and time; acute 0
+  #mig_series is labeled migseries* in pm
+  #mig_pred time? Where to put this line?
+  mig_pred = ifelse(time>=2011, 1, 1/pm$mig_series) 
   migration <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
-  
+  migration["age0to4", "s"] <- pm$mig0to4sus * pm$mig_series * pm$mig_pred
+  migration["age5to14", "s"] <- pm$mig5to14sus  * pm$mig_series * pm$mig_pred
+  migration["age15to44", "s"] <- pm$mig15to44sus * pm$mig_series * pm$mig_pred
+  migration["age45", "s"] <- pm$mig45sus * pm$mig_series * pm$mig_pred
+  migration["age0to4", "ch"] <- pm$mig0to4chronic * pm$mig_series * pm$mig_pred
+  migration["age5to14", "ch"] <- pm$mig5to14chronic * pm$mig_series * pm$mig_pred
+  migration["age15to44", "ch"] <- pm$mig15to44chronic * pm$mig_series * pm$mig_pred
+  migration["age45", "ch"] <- pm$mig45chronic * pm$mig_series * pm$mig_pred
+  migration["age0to4", "cl"] <- pm$mig0to4cleared * pm$mig_series * pm$mig_pred
+  migration["age5to14", "cl"] <- pm$mig5to14cleared * pm$mig_series * pm$mig_pred
+  migration["age15to44", "cl"] <- pm$mig15to44cleared * pm$mig_series * pm$mig_pred
+  migration["age45", "cl"] <- pm$mig45cleared * pm$mig_series * pm$mig_pred
+  migration["age0to4", "i"] <- 0 * pm$mig_series * pm$mig_pred
+  migration["age5to14", "i"] <- 0 * pm$mig_series * pm$mig_pred
+  migration["age15to44", "i"] <- 0 * pm$mig_series * pm$mig_pred
+  migration["age45", "i"] <- 0 * pm$mig_series * pm$mig_pred
+    
   #clearance only applied to chronics and cleared, differ by age group
   #clear <- matrix(pm$clr_rate_1, pm$clr_rate_2, pm$clr_rate_3, 
   #pm$clr_rate_4,nrow = npops, dimnames = dimNames)
-  clear <- matrix(0, ncol = 1, nrow = 4)
+  clear <- matrix(0, ncol = 1, nrow = npops)
   clear[0] <- pm$clr_rate_0 #age group 0 to 4
   clear[1] <- pm$clr_rate_1 #age group 5 to 14
   clear[2] <- pm$clr_rate_2 #age group 15 to 44
   clear[3] <- pm$clr_rate_3 #age group 45  
   
   #recover
-  recover <- matrix(acc, ncol = 1, nrow = 4)
-  recover[0] <- ac_res_rate*(1-prog_chron_0) #age group 0 to 4
-  recover[1] <- ac_res_rate*(1-prog_chron_1) #age group 5 to 14
-  recover[2] <- ac_res_rate*(1-prog_chron_2) #age group 15 to 44
-  recover[3] <- ac_res_rate*(1-prog_chron_3) #age group 45  
+  recover <- matrix(acc, ncol = 1, nrow = npops)
+  recover[0] <- pm$ac_res_rate*(1-pm$prog_chron_0) #age group 0 to 4
+  recover[1] <- pm$ac_res_rate*(1-pm$prog_chron_1) #age group 5 to 14
+  recover[2] <- pm$ac_res_rate*(1-pm$prog_chron_2) #age group 15 to 44
+  recover[3] <- pm$ac_res_rate*(1-pm$prog_chron_3) #age group 45  
   
   
   # Loop over state equations ---------------------------------------------
@@ -145,7 +178,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
                     forceInfection * oldPop[, "s"] +
                     migration[, "a", time] +
                     prog * oldPop[, "a"] -
-                    bgMortality[time,] -
+                    bgMortality[time, ] -
                     hbvMortality[, "a"] -
                     recover * oldPop[, "a"]         
 
@@ -153,14 +186,14 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
                     transistion * oldPop[, "ch"] +
                     prog * oldPop[, "ch"] +
                     migration[, "ch", time] -
-                    bgMortality[time,] -
+                    bgMortality[time, ] -
                     hbvMortality[, "ch"]  -   
                     clear * oldPop[, "ch"]
    
     newPop[, "cl"] <- oldPop[, "cl"] + 
                     transistion * oldPop[, "cl"] +
                     migration[, "cl", time] -
-                    bgMortality[time,] -
+                    bgMortality[time, ] -
                     hbvMortality[, "cl"] + 
                     recover * oldPop[, "a"] + 
                     clear * oldPop[, "ch"]     
@@ -168,26 +201,32 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
     newPop[, "i"] <- oldPop[, "i"] + 
                     transistion * oldPop[, "i"] +
                     migration[, "i", time] -
-                    bgMortality[time,] -
+                    bgMortality[time, ] -
                     hbvMortality[, "i"] + 
                     vacc * oldPop[, "s"]   
     
     # Sort out results 
     allPops[, , time] <- newPop
     newInfections[, time] <- forceInfection * oldPop[, "s"]
-    # chronics 
+    newHBVdeaths[, time] <- hbvMortality[, "a"] + hbvMortality[, "ch"] 
+    newVaccinations <- vacc * oldPop[, "s"]
+    newMigrants <- migration[, "s", time] + migration[, "a", time] + migration[, "ch", time] + migration[, "cl", time] + migration[, "i", time]
+    newTreatments <- clear * oldPop[, "ch"]
+    newCured <- recover * oldPop[, "a"]  
+    
   }
   
   # Sort out results ------------------------------------------------------
   
   results <- list(allPops = allPops, 
-                  newInfections = newInfections)
+                  newInfections = newInfections, newHBVdeaths = newHBVdeaths, newVaccinations = newVaccinations, newMigrants = newMigrants, newTreatments = newTreatments, newCured = newCured)
 #  totalPopulation
-#  susceptible
-#  acute
-  # chronic
-  # cleared
-  # immune
+  # newInfections <- initResultsMatrix
+  # newHBVdeaths <- initResultsMatrix
+  # newVaccinations <- initResultsMatrix
+  # newMigrants <- initResultsMatrix
+  # newTreatments <- initResultsMatrix
+  # newCured <- initResultsMatrix
   
   return(results)
   
