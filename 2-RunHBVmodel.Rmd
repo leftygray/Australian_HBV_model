@@ -1,0 +1,61 @@
+# Run HBV model 
+# =============
+
+Authors: Richard T. Gray, Neil Bretana
+
+This script is used to create a project and run in the HBV model. 
+
+```{r Initialize script}
+# Clear workspace
+rm(list = ls()) 
+
+# Setup directories after setting working directory to source file 
+# directory (so it is easy to move code around)
+basePath <- getwd()
+dataPath <- file.path(basePath, "data") # original data stored in ./BM datasets
+Rcode <- file.path(basePath, "code")
+
+# Load useful libraries
+source(file.path(Rcode, "LoadLibrary.R"))
+LoadLibrary("readr")
+LoadLibrary("dplyr")
+LoadLibrary("tidyr")
+
+# Output file names
+paramFile1 <- "parameters_constant.csv"
+paramFile2 <- "parameters_time_varying.csv"
+
+# Source model files
+source(file.path(Rcode, "HBVmodel.R"))
+
+```
+
+
+```{r test project}
+
+pg <- data.frame(dt = double(1))
+
+pg$dt <- 1 # Will need to change this for full run of model to 0.1 or 1/12 etc
+
+constants <- read_csv(file.path(dataPath, paramFile1))
+timeVary <- read_csv(file.path(dataPath, paramFile2))
+
+pm <- timeVary
+
+nrow(timeVary)
+
+# Add constants to pm by making them time varying 
+
+constantsSpread <- constants %>%
+  spread(parameter, value) 
+
+test <- rep(as.matrix(constantsSpread[1, ]), 100, each = nrow(constants))
+
+# pm 
+
+```
+
+```{r Run model}
+
+
+```
