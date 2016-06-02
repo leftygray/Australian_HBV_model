@@ -1,0 +1,134 @@
+windows nt (unknown)
+isWindows
+checkRequiredInputs: init_pop*pop_prop_0*.998 init_pop*pop_prop_0*.998 
+checkRequiredInputs: 
+checkRequiredInputs: init_pop*pop_prop_0*.001 init_pop*pop_prop_0*.001 
+checkRequiredInputs: init_pop*pop_prop_0*.001 init_pop*pop_prop_0*.001 
+checkRequiredInputs: Sus_0*f_o_i_0 Sus_0*f_o_i_0 
+checkRequiredInputs: Acute_0*ac_res_rate*prog_chron_0 Acute_0*ac_res_rate*prog_chron_0 Acute_0*ac_res_rate*prog_chron_0 
+checkRequiredInputs: Acute_0*ac_res_rate*(1-prog_chron_0) Acute_0*ac_res_rate*(1-prog_chron_0) Acute_0*ac_res_rate*(1-prog_chron_0) 
+checkRequiredInputs: Chronic_0*clr_rate_0 Chronic_0*clr_rate_0 
+checkRequiredInputs: 
+checkRequiredInputs: #mig0sus(TIME)*mig_series*mig_pred #mig0sus(TIME)*mig_series*mig_pred 
+checkRequiredInputs: #mig0chron(TIME)*mig_series*mig_pred #mig0chron(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_0*#bgmort0(TIME) 
+checkRequiredInputs: Acute_0*(#bgmort0(TIME)+ac_mort_rate_0) Acute_0*(#bgmort0(TIME)+ac_mort_rate_0) 
+checkRequiredInputs: Chronic_0*(#bgmort0(TIME)+chr_mort_rate_0) Chronic_0*(#bgmort0(TIME)+chr_mort_rate_0) 
+checkRequiredInputs: Cleared_0*#bgmort0(TIME) 
+checkRequiredInputs: #mig0cleared(TIME)*mig_series*mig_pred #mig0cleared(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_0*(1/5) 
+checkRequiredInputs: Acute_0*(1/5) 
+checkRequiredInputs: Chronic_0*(1/5) 
+checkRequiredInputs: Cleared_0*(1/5) 
+checkRequiredInputs: init_pop*pop_prop_1*.994 init_pop*pop_prop_1*.994 
+checkRequiredInputs: 
+checkRequiredInputs: init_pop*pop_prop_1*.002 init_pop*pop_prop_1*.002 
+checkRequiredInputs: init_pop*pop_prop_0*.004 init_pop*pop_prop_0*.004 
+checkRequiredInputs: Sus_1*f_o_i_1 Sus_1*f_o_i_1 
+checkRequiredInputs: Acute_1*ac_res_rate*prog_chron_1 Acute_1*ac_res_rate*prog_chron_1 Acute_1*ac_res_rate*prog_chron_1 
+checkRequiredInputs: Acute_1*ac_res_rate*(1-prog_chron_1) Acute_1*ac_res_rate*(1-prog_chron_1) Acute_1*ac_res_rate*(1-prog_chron_1) 
+checkRequiredInputs: Chronic_1*clr_rate_1 Chronic_1*clr_rate_1 
+checkRequiredInputs: #mig1sus(TIME)*mig_series*mig_pred #mig1sus(TIME)*mig_series*mig_pred 
+checkRequiredInputs: #mig1chron(TIME)*mig_series*mig_pred #mig1chron(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_1*#bgmort1(TIME) 
+checkRequiredInputs: Acute_1*(#bgmort1(TIME)+ac_mort_rate_1) Acute_1*(#bgmort1(TIME)+ac_mort_rate_1) 
+checkRequiredInputs: Chronic_1*(#bgmort1(TIME)+chr_mort_rate_1) Chronic_1*(#bgmort1(TIME)+chr_mort_rate_1) 
+checkRequiredInputs: Cleared_1*#bgmort1(TIME) 
+checkRequiredInputs: #mig1cleared(TIME)*mig_series*mig_pred #mig1cleared(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_1*(1/10) 
+checkRequiredInputs: Acute_1*(1/10) 
+checkRequiredInputs: Chronic_1*(1/10) 
+checkRequiredInputs: Cleared_1*(1/10) 
+checkRequiredInputs: init_pop*pop_prop_2*.94 init_pop*pop_prop_2*.94 
+checkRequiredInputs: 
+checkRequiredInputs: init_pop*pop_prop_2*.007 init_pop*pop_prop_2*.007 
+checkRequiredInputs: init_pop*pop_prop_2*.053 init_pop*pop_prop_2*.053 
+checkRequiredInputs: Sus_2*f_o_i_2 Sus_2*f_o_i_2 
+checkRequiredInputs: Acute_2*ac_res_rate*prog_chron_2 Acute_2*ac_res_rate*prog_chron_2 Acute_2*ac_res_rate*prog_chron_2 
+checkRequiredInputs: Acute_2*ac_res_rate*(1-prog_chron_2) Acute_2*ac_res_rate*(1-prog_chron_2) Acute_2*ac_res_rate*(1-prog_chron_2) 
+checkRequiredInputs: Chronic_2*clr_rate_2 Chronic_2*clr_rate_2 
+checkRequiredInputs: #mig2sus(TIME)*mig_series*mig_pred #mig2sus(TIME)*mig_series*mig_pred 
+checkRequiredInputs: #mig2chron(TIME)*mig_series*mig_pred #mig2chron(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_2*#bgmort2(TIME) 
+checkRequiredInputs: Acute_2*(#bgmort2(TIME)+ac_mort_rate_2) Acute_2*(#bgmort2(TIME)+ac_mort_rate_2) 
+checkRequiredInputs: Chronic_2*(#bgmort2(TIME)+chr_mort_rate_2) Chronic_2*(#bgmort2(TIME)+chr_mort_rate_2) 
+checkRequiredInputs: Cleared_2*#bgmort2(TIME) 
+checkRequiredInputs: #mig2cleared(TIME)*mig_series*mig_pred #mig2cleared(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_2*(1/30) 
+checkRequiredInputs: Acute_2*(1/30) 
+checkRequiredInputs: Chronic_2*(1/30) 
+checkRequiredInputs: Cleared_2*(1/30) 
+checkRequiredInputs: init_pop*pop_prop_3*.94 init_pop*pop_prop_3*.94 
+checkRequiredInputs: 
+checkRequiredInputs: init_pop*pop_prop_3*.005 init_pop*pop_prop_3*.005 
+checkRequiredInputs: init_pop*pop_prop_3*.055 init_pop*pop_prop_3*.055 
+checkRequiredInputs: Sus_3*f_o_i_3 Sus_3*f_o_i_3 
+checkRequiredInputs: Acute_3*ac_res_rate*prog_chron_3 Acute_3*ac_res_rate*prog_chron_3 Acute_3*ac_res_rate*prog_chron_3 
+checkRequiredInputs: Acute_3*ac_res_rate*(1-prog_chron_3) Acute_3*ac_res_rate*(1-prog_chron_3) Acute_3*ac_res_rate*(1-prog_chron_3) 
+checkRequiredInputs: Chronic_3*clr_rate_3 Chronic_3*clr_rate_3 
+checkRequiredInputs: #mig3sus(TIME)*mig_series*mig_pred #mig3sus(TIME)*mig_series*mig_pred 
+checkRequiredInputs: #mig3chron(TIME)*mig_series*mig_pred #mig3chron(TIME)*mig_series*mig_pred 
+checkRequiredInputs: Sus_3*#bgmort3(TIME) 
+checkRequiredInputs: Acute_3*(#bgmort3(TIME)+ac_mort_rate_3) Acute_3*(#bgmort3(TIME)+ac_mort_rate_3) 
+checkRequiredInputs: Chronic_3*(#bgmort3(TIME)+chr_mort_rate_3) Chronic_3*(#bgmort3(TIME)+chr_mort_rate_3) 
+checkRequiredInputs: Cleared_3*#bgmort3(TIME) 
+checkRequiredInputs: #mig3cleared(TIME)*mig_series*mig_pred #mig3cleared(TIME)*mig_series*mig_pred 
+checkRequiredInputs: 
+checkRequiredInputs: Sus_0*vacc_eff_0*vacc_prop_0*vacc_prog_0*vacc_avail Sus_0*vacc_eff_0*vacc_prop_0*vacc_prog_0*vacc_avail Sus_0*vacc_eff_0*vacc_prop_0*vacc_prog_0*vacc_avail Sus_0*vacc_eff_0*vacc_prop_0*vacc_prog_0*vacc_avail Sus_0*vacc_eff_0*vacc_prop_0*vacc_prog_0*vacc_avail 
+checkRequiredInputs: 
+checkRequiredInputs: Sus_1*vacc_eff_1*vacc_prop_1*vacc_prog_1*vacc_avail Sus_1*vacc_eff_1*vacc_prop_1*vacc_prog_1*vacc_avail Sus_1*vacc_eff_1*vacc_prop_1*vacc_prog_1*vacc_avail Sus_1*vacc_eff_1*vacc_prop_1*vacc_prog_1*vacc_avail Sus_1*vacc_eff_1*vacc_prop_1*vacc_prog_1*vacc_avail 
+checkRequiredInputs: 
+checkRequiredInputs: Sus_2*vacc_eff_2*vacc_prop_2*vacc_avail Sus_2*vacc_eff_2*vacc_prop_2*vacc_avail Sus_2*vacc_eff_2*vacc_prop_2*vacc_avail Sus_2*vacc_eff_2*vacc_prop_2*vacc_avail 
+checkRequiredInputs: 
+checkRequiredInputs: Sus_3*vacc_eff_3*vacc_prop_3*vacc_avail Sus_3*vacc_eff_3*vacc_prop_3*vacc_avail Sus_3*vacc_eff_3*vacc_prop_3*vacc_avail Sus_3*vacc_eff_3*vacc_prop_3*vacc_avail 
+checkRequiredInputs: 0*mig_series*mig_pred 0*mig_series*mig_pred 
+checkRequiredInputs: Immune_0*(1/5) 
+checkRequiredInputs: Immune_0*#bgmort0(TIME) 
+checkRequiredInputs: 0*mig_series*mig_pred 0*mig_series*mig_pred 
+checkRequiredInputs: 0*mig_series*mig_pred 0*mig_series*mig_pred 
+checkRequiredInputs: 0*mig_series*mig_pred 0*mig_series*mig_pred 
+checkRequiredInputs: Immune_1*(1/10) 
+checkRequiredInputs: Immune_2*(1/30) 
+checkRequiredInputs: Immune_1*#bgmort1(TIME) 
+checkRequiredInputs: Immune_2*#bgmort2(TIME) 
+checkRequiredInputs: Immune_3*#bgmort3(TIME) 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: Sus_0*f_o_i_0 Sus_0*f_o_i_0 
+checkRequiredInputs: Sus_1*f_o_i_1 Sus_1*f_o_i_1 
+checkRequiredInputs: Sus_2*f_o_i_2 Sus_2*f_o_i_2 
+checkRequiredInputs: Sus_3*f_o_i_3 Sus_3*f_o_i_3 
+checkRequiredInputs: Acute_0*ac_res_rate*prog_chron_0 Acute_0*ac_res_rate*prog_chron_0 Acute_0*ac_res_rate*prog_chron_0 
+checkRequiredInputs: Acute_1*ac_res_rate*prog_chron_1 Acute_1*ac_res_rate*prog_chron_1 Acute_1*ac_res_rate*prog_chron_1 
+checkRequiredInputs: Acute_2*ac_res_rate*prog_chron_2 Acute_2*ac_res_rate*prog_chron_2 Acute_2*ac_res_rate*prog_chron_2 
+checkRequiredInputs: Acute_3*ac_res_rate*prog_chron_3 Acute_3*ac_res_rate*prog_chron_3 Acute_3*ac_res_rate*prog_chron_3 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: 
+checkRequiredInputs: (Cleared_0+Immune_0+Sus_0)*#bgmort0(TIME) (Cleared_0+Immune_0+Sus_0)*#bgmort0(TIME) (Cleared_0+Immune_0+Sus_0)*#bgmort0(TIME) 
+checkRequiredInputs: (Cleared_1+Immune_1+Sus_1)*#bgmort1(TIME) (Cleared_1+Immune_1+Sus_1)*#bgmort1(TIME) (Cleared_1+Immune_1+Sus_1)*#bgmort1(TIME) 
+checkRequiredInputs: (Cleared_2+Immune_2+Sus_2)*#bgmort2(TIME) (Cleared_2+Immune_2+Sus_2)*#bgmort2(TIME) (Cleared_2+Immune_2+Sus_2)*#bgmort2(TIME) 
+checkRequiredInputs: (Cleared_3+Immune_3+Sus_3)*#bgmort3(TIME) (Cleared_3+Immune_3+Sus_3)*#bgmort3(TIME) (Cleared_3+Immune_3+Sus_3)*#bgmort3(TIME) 
+checkRequiredInputs: Acute_0*(#bgmort0(TIME)+ac_mort_rate_0) Acute_0*(#bgmort0(TIME)+ac_mort_rate_0) 
+checkRequiredInputs: Chronic_0*(#bgmort0(TIME)+chr_mort_rate_0) Chronic_0*(#bgmort0(TIME)+chr_mort_rate_0) 
+checkRequiredInputs: Acute_1*(#bgmort1(TIME)+ac_mort_rate_1) Acute_1*(#bgmort1(TIME)+ac_mort_rate_1) 
+checkRequiredInputs: Chronic_1*(#bgmort1(TIME)+chr_mort_rate_1) Chronic_1*(#bgmort1(TIME)+chr_mort_rate_1) 
+checkRequiredInputs: Acute_2*(#bgmort2(TIME)+ac_mort_rate_2) Acute_2*(#bgmort2(TIME)+ac_mort_rate_2) 
+checkRequiredInputs: Acute_3*(#bgmort3(TIME)+ac_mort_rate_3) Acute_3*(#bgmort3(TIME)+ac_mort_rate_3) 
+checkRequiredInputs: Chronic_2*(#bgmort2(TIME)+chr_mort_rate_2) Chronic_2*(#bgmort2(TIME)+chr_mort_rate_2) 
+checkRequiredInputs: Chronic_3*(#bgmort3(TIME)+chr_mort_rate_3) Chronic_3*(#bgmort3(TIME)+chr_mort_rate_3) 
