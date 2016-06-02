@@ -172,12 +172,12 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
   
   results <- list(allPops = allPops, 
                   newInfections = newInfections)
-  totalPopulation
-  susceptible
-  acute
-  chronic
-  cleared
-  immune
+#  totalPopulation
+#  susceptible
+#  acute
+  # chronic
+  # cleared
+  # immune
   
   return(results)
   
