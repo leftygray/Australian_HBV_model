@@ -6,7 +6,8 @@
 
 # Authors: Richard T. Gray, Neil Bratana
 
-HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL, pts) {
+HbvModel <- function(pg, pm, initialPop, transitions = NULL, 
+                     interactions = NULL, pts) {
   # Function to simulate the HBV model equations 
   # 
   # Args:
@@ -51,41 +52,47 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
   
   # Initialize output -----------------------------------------------------
   
-  allPops <- array(0, c(npops, nstates, npts), dimnames = dimNames) # population, state, time
-  allpops[, , 1] <- initialPop # The first point is the initial population
+  # May results in allPops array - population, state, time
+  allPops <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
+  allpops[, , 1] <- initialPop # the first sheet is the initial population
 
-  initResults <- matrix(0, nrow = npops, ncol = nstates, dimnames = dimNames)
-  newInfections <- initResults
-  # newHBVdeaths <- initResults
-  # newTreatments <- initResults
-  # newCured <- initResults
+  initResultsMatrix <- matrix(0, nrow = npops, ncol = nstates, 
+                              dimnames = dimNames)
+  newInfections <- initResultsMatrix
+  # newHBVdeaths <- initResultsMatrix
+  # newTreatments <- initResultsMatrix
+  # newCured <- initResultsMatrix
   
   # Force of infection calculations ---------------------------------------
-  forceInfection <- matrix(0, ncol = 1, nrow = 4)
-  forceInfection[1] <- f_o_i_0
-  forceInfection[2] <- f_o_i_1
-  forceInfection[3] <- f_o_i_2
-  forceInfection[4] <- f_o_i_3
+  forceInfection <- matrix(0, ncol = 1, nrow = npops)
+  forceInfection[1] <- pm$f_o_i_0
+  forceInfection[2] <- pm$f_o_i_1
+  forceInfection[3] <- pm$f_o_i_2
+  forceInfection[4] <- pm$f_o_i_3
   
   #progression of HBV only affects acute and chronics
   #prog <- matrix(0, ncol = 4, nrow = 4)
-  progress <- matrix(acc, ncol = 1, nrow = 4)
-  progress[0] <- ac_res_rate*prog_chron_0 #age group 0 to 4
-  progress[1] <- clr_rate_1*prog_chron_1 #age group 5 to 14
-  progress[2] <- clr_rate_2*prog_chron_2 #age group 15 to 44
-  progress[3] <- clr_rate_3*prog_chron_3 #age group 45  
+  progress <- matrix(0, ncol = 1, nrow = npops)
+  progress[0] <- pm$ac_res_rate * pm$prog_chron_0 #age group 0 to 4
+  progress[1] <- pm$clr_rate_1 * pm$prog_chron_1  #age group 5 to 14
+  progress[2] <- pm$clr_rate_2 * pm$prog_chron_2  #age group 15 to 44
+  progress[3] <- pm$clr_rate_3 * pm$prog_chron_3  #age group 45  
   
-  #births differ based on time but only applied to susceptibles and only to age group 0 so other age groups have to be 0
-  #births <- c(parameter, 0, 0, 0)
-  births <- matrix(0, ncol=npops, nrow=npts)
+  # births differ based on time but only applied to susceptibles and only 
+  # to age group 0 so other age groups have to be 0
+  births <- matrix(0, ncol = npops, nrow = npts)
+  births[, 1] <- pm$births
   
   #Mortality is split into background mortality and HCV mortality
-  #bgMortality changes according to time, applied to all age groups but disregards HBV status
-  bgMortality <-  matrix(0, ncol=npops, nrow=npts)
+  #bgMortality changes according to time, applied to all age groups but 
+  #disregards HBV status
+  bgMortality <-  matrix(0, ncol = npops, nrow = npts)
+  
   #hbvMortality differs according to age group and HBV status, disregards time
   hbvMortality <- array(0, c(npops, nstates), dimnames = dimNames)
   
-  #vacc only applies to susceptibles and immune, differs based on age groups depending on vac_eff, vacc_prop, vacc_prog, and vacc_avail
+  #vacc only applies to susceptibles and immune, differs based on age 
+  #groups depending on vac_eff, vacc_prop, vacc_prog, and vacc_avail
   #vacc <- matrix(0, ncol = npops, nrow = 1)
   #vacc <- array(0, c(npops, nstates), dimnames = dimNames) 
   vacc <- matrix(0, ncol = 1, nrow = 4)
@@ -98,12 +105,13 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
   migration <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
   
   #clearance only applied to chronics and cleared, differ by age group
-  #clear <- matrix(pm$clr_rate_1, pm$clr_rate_2, pm$clr_rate_3, pm$clr_rate_4,nrow = npops, dimnames = dimNames)
+  #clear <- matrix(pm$clr_rate_1, pm$clr_rate_2, pm$clr_rate_3, 
+  #pm$clr_rate_4,nrow = npops, dimnames = dimNames)
   clear <- matrix(0, ncol = 1, nrow = 4)
-  clear[0] <- clr_rate_0 #age group 0 to 4
-  clear[1] <- clr_rate_1 #age group 5 to 14
-  clear[2] <- clr_rate_2 #age group 15 to 44
-  clear[3] <- clr_rate_3 #age group 45  
+  clear[0] <- pm$clr_rate_0 #age group 0 to 4
+  clear[1] <- pm$clr_rate_1 #age group 5 to 14
+  clear[2] <- pm$clr_rate_2 #age group 15 to 44
+  clear[3] <- pm$clr_rate_3 #age group 45  
   
   #recover
   recover <- matrix(acc, ncol = 1, nrow = 4)
@@ -125,11 +133,13 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
     newPop[, "s"] <- oldPop[, "s"] + 
                     transistion * oldPop[, "s"] +
                     forceInfection * oldPop[, "s"] +
-                    births[time,] + migration[, "s", time] -
-                    bgMortality[time,] -
+                    births[time, ] + migration[, "s", time] -
+                    bgMortality[time, ] -
                     hbvMortality[, "s"] -
                     vacc * oldPop[, "s"]
-    #migration 0 
+    # For acutes there appears to be no migration. Probably makes sense
+    # because acute satge is short so when people enter Australia they are 
+    # either susceptible of chronically infected. May need review later. 
     newPop[, "a"] <-  oldPop[, "a"] + 
                     transistion * oldPop[, "a"] +
                     forceInfection * oldPop[, "s"] +
@@ -165,7 +175,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
     # Sort out results 
     allPops[, , time] <- newPop
     newInfections[, time] <- forceInfection * oldPop[, "s"]
-    chronics 
+    # chronics 
   }
   
   # Sort out results ------------------------------------------------------
@@ -180,6 +190,5 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL, interactions = NULL
   # immune
   
   return(results)
-  
   
 }
