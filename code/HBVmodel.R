@@ -42,9 +42,11 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   # Extract useful inputs -------------------------------------------------
   
   dt <- pg$dt
-  npts <- length(pts)
+  # npts <- length(pts)
   npops <- pg$npops
   nstates <- pg$nstates
+  years <- pg$years # 1951 to 2050
+  npts <- length(pts) # length(years)
   
   stateNames <- c("s", "a", "ch", "cl", "i")
   popNames <- c("age0to4", "age5to14", "age15to44", "age45")
@@ -56,8 +58,8 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   allPops <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
   allpops[, , 1] <- initialPop # the first sheet is the initial population
 
-  #initResultsMatrix <- matrix(0, nrow = npops, ncol = nstates, dimnames = dimNames)
   initResultsMatrix <- matrix(0, nrow = npops, ncol = npts, dimnames = dimNames)
+  
   newInfections <- initResultsMatrix
   newHBVdeaths <- initResultsMatrix
   newVaccinations <- initResultsMatrix
@@ -118,7 +120,9 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   #migration proportions differ based on age group, HBV status, and time; acute 0
   #mig_series is labeled migseries* in pm
   #mig_pred time? Where to put this line?
-  mig_pred = ifelse(time>=2011, 1, 1/pm$mig_series) 
+  mig_pred <- matrix(1, 1, npts)
+  mig_pred(years < 2011) <- 1/pm$mig_series
+
   migration <- array(0, c(npops, nstates, npts), dimnames = dimNames) 
   migration["age0to4", "s"] <- pm$mig0to4sus * pm$mig_series * pm$mig_pred
   migration["age5to14", "s"] <- pm$mig5to14sus  * pm$mig_series * pm$mig_pred
@@ -153,6 +157,12 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
   recover[2] <- pm$ac_res_rate*(1-pm$prog_chron_2) #age group 15 to 44
   recover[3] <- pm$ac_res_rate*(1-pm$prog_chron_3) #age group 45  
   
+  # Transitions - setup for moving between populations due to aging or
+  # changing characteristics. WARNING: hard coded for the time being
+  transitions <- matrix(0, npops, npops)
+  transitions[1,2] <- 1/5
+  transitions[2,3] <- 1/10
+  transitions[3,4] <- 1/30
   
   # Loop over state equations ---------------------------------------------
   
@@ -164,7 +174,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
     # Equations 
     #added + before forceInfection 
     newPop[, "s"] <- oldPop[, "s"] + 
-                    transistion * oldPop[, "s"] +
+                    transistions %*% oldPop[, "s"] +
                     forceInfection * oldPop[, "s"] +
                     births[time, ] + migration[, "s", time] -
                     bgMortality[time, ] -
@@ -174,7 +184,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
     # because acute satge is short so when people enter Australia they are 
     # either susceptible of chronically infected. May need review later. 
     newPop[, "a"] <-  oldPop[, "a"] + 
-                    transistion * oldPop[, "a"] +
+      transistions * oldPop[, "a"] +
                     forceInfection * oldPop[, "s"] +
                     migration[, "a", time] +
                     prog * oldPop[, "a"] -
@@ -183,7 +193,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
                     recover * oldPop[, "a"]         
 
     newPop[, "ch"] <- oldPop[, "ch"] + 
-                    transistion * oldPop[, "ch"] +
+      transistions * oldPop[, "ch"] +
                     prog * oldPop[, "ch"] +
                     migration[, "ch", time] -
                     bgMortality[time, ] -
@@ -191,7 +201,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
                     clear * oldPop[, "ch"]
    
     newPop[, "cl"] <- oldPop[, "cl"] + 
-                    transistion * oldPop[, "cl"] +
+      transistions * oldPop[, "cl"] +
                     migration[, "cl", time] -
                     bgMortality[time, ] -
                     hbvMortality[, "cl"] + 
@@ -199,7 +209,7 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
                     clear * oldPop[, "ch"]     
 
     newPop[, "i"] <- oldPop[, "i"] + 
-                    transistion * oldPop[, "i"] +
+      transistions * oldPop[, "i"] +
                     migration[, "i", time] -
                     bgMortality[time, ] -
                     hbvMortality[, "i"] + 
@@ -209,24 +219,23 @@ HbvModel <- function(pg, pm, initialPop, transitions = NULL,
     allPops[, , time] <- newPop
     newInfections[, time] <- forceInfection * oldPop[, "s"]
     newHBVdeaths[, time] <- hbvMortality[, "a"] + hbvMortality[, "ch"] 
-    newVaccinations <- vacc * oldPop[, "s"]
-    newMigrants <- migration[, "s", time] + migration[, "a", time] + migration[, "ch", time] + migration[, "cl", time] + migration[, "i", time]
-    newTreatments <- clear * oldPop[, "ch"]
-    newCured <- recover * oldPop[, "a"]  
-    
+    newVaccinations[, time] <- vacc * oldPop[, "s"]
+    newMigrants[, time] <- migration[, "s", time] + migration[, "a", time] + 
+      migration[, "ch", time] + migration[, "cl", time] + 
+      migration[, "i", time]
+    newTreatments[, time] <- clear * oldPop[, "ch"]
+    newCured[, time] <- recover * oldPop[, "a"]  
   }
   
   # Sort out results ------------------------------------------------------
   
   results <- list(allPops = allPops, 
-                  newInfections = newInfections, newHBVdeaths = newHBVdeaths, newVaccinations = newVaccinations, newMigrants = newMigrants, newTreatments = newTreatments, newCured = newCured)
-#  totalPopulation
-  # newInfections <- initResultsMatrix
-  # newHBVdeaths <- initResultsMatrix
-  # newVaccinations <- initResultsMatrix
-  # newMigrants <- initResultsMatrix
-  # newTreatments <- initResultsMatrix
-  # newCured <- initResultsMatrix
+                  newInfections = newInfections, 
+                  newHBVdeaths = newHBVdeaths, 
+                  newVaccinations = newVaccinations, 
+                  newMigrants = newMigrants, 
+                  newTreatments = newTreatments, 
+                  newCured = newCured)
   
   return(results)
   
