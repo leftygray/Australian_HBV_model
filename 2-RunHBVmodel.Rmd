@@ -49,8 +49,10 @@ nrow(timeVary)
 constantsSpread <- constants %>%
   spread(parameter, value) 
 
-test <- rep(as.matrix(constantsSpread[1, ]), 100, each = nrow(constants))
+#test <- rep(as.matrix(constantsSpread[1, ]), 100, each = nrow(constants))
 
+#add constants to pm
+test <- cbind(timeVary,constantsSpread[1,])
 # pm 
 
 ```
