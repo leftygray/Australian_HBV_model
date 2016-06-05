@@ -25,6 +25,32 @@ population_names <- c()
   
 ```
 
+```{r Parameter specification}
+
+# The following constant parameters are generated for each population -
+# parameters generated for each population
+constNamesPops <- c("acute", "immune", "cum_acute", "cum_chronic", 
+               "cum_deaths_uninf", "cum_acute_deaths",
+               "cum_chronic_deaths", "pop_prop", "prog_chron",
+               "clr_rate", "ac_mort_rate", "chr_mort_rate", "vac_eff",
+               "vac_prop")
+
+# The following constant parameters are the same for all populations or
+# population agnostic.
+constNames <- c("init_pop", "mig_series", "dis_rate", "ac_res_rate",
+                "fol_mult", "vacc_tog")
+
+timeVaryNames <- c("births", "notifications", "years")
+
+timeVaryPops <- c("bgmort0to4", "bgmort5to14", "bgmort15to44", "bgmort45",
+                  "mig0to4chronic", "mig0to4cleared", "mig0to4sus",
+                  "mig5to14chronic", "mig5to14cleared", "mig5to14sus", 
+                  "mig15to44chronic", "mig15to44cleared", "mig15to44sus", 
+                  "mig45chronic", "mig45cleared", "mig45sus")
+
+```
+
+
 ```{r Create directory and files}
 # Create directory
 
