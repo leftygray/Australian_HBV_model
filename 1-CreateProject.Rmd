@@ -1,0 +1,45 @@
+# Create HBV model project
+# ========================
+
+Authors: Richard T. Gray, Neil Bretana
+
+This Rmarkdown script is used to create a HBV modelling project specified 
+by the user. 
+
+```{r setup}
+
+```
+
+```{r Project specifications}
+# Hard coded user specified project details
+
+project_name <- "Australia_HBV_estimates"
+project_directory <- file.path(pwd, "projects")
+
+start_year <- 1951
+end_year <- 2050
+timestep <- 0.1
+
+full_population_names <- c()
+population_names <- c()
+  
+```
+
+```{r Create directory and files}
+# Create directory
+
+
+# Create parameter files
+
+
+# Create project .rda files
+
+```
+
+```{r Create project specifications list}
+
+
+
+
+
+```
