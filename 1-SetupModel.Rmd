@@ -29,21 +29,25 @@ project_directory <- file.path(basePath, "projects")
 ## User inputs
 
 The following chunk is where the user enters project details and
-scenario specifications
+scenario specifications. 
 
 ```{r Project specifications}
 
+# Project to load and setup
 project_name <- "Australia_HBV_estimates"
 
+# Number of parameter sets to run
 number_samples <- 10
 
+# Current year to run future scenarios - simluation runs from the start
+# of this year
 current_year <- 2016
 
 ```
 
 ## Project set-up
 
-The following chunks contain the code to generate the paramter sets
+
 
 ```{r Update project specifications}
 
@@ -81,6 +85,9 @@ inputs <- list(constants = constants, time_varying = timeVarying,
                transitions = transitions, interactions = interactions)
 
 ```
+  
+The following chunk contains the code to generate the best estimate 
+parameter set and the ramdomly sampled parameter sets for the project.
   
 ```{r Generate parameter sets}
 
@@ -171,6 +178,8 @@ for (set in 1:number_samples) {
 }
 
 ```
+
+The final chunnk updates the project file for running in the model. 
 
 ```{r Save file project file}
 # Re-save projects file with updated specs, inputs and append best
