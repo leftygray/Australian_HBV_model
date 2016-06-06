@@ -27,10 +27,16 @@ The following chunk is where the user enters the project specifications
 project_name <- "Australia_HBV_estimates"
 project_directory <- file.path(basePath, "projects")
 
+# Start of the first year
 start_year <- 1951
+
+#start of the final year represents end of year before 
 end_year <- 2050
+
+# Simulation timestep
 timestep <- 0.1
 
+# Populations modelled
 full_population_names <- c("Infants aged 0 to 4", 
                            "Children aged 5 to 14",
                            "Adults aged 15 to 44", 
@@ -127,6 +133,8 @@ write_csv(constants, file.path(projectFolder, "parameters_constants.csv"))
 timeVarying <- as.data.frame(matrix(0, nrow = nyears, 
   ncol = length(timeVaryNames) + length(timeVaryPops)))
 colnames(timeVarying) <- c(timeVaryNames, timeVaryPops)
+
+timeVarying$years <- start_year:end_year
 
 write_csv(timeVarying, file.path(projectFolder,
                                "parameters_time_varying.csv"))

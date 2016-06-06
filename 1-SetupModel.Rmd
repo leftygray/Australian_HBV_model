@@ -58,7 +58,8 @@ load(file.path(projectFolder, paste0(project_name, ".rda")))
 # Add some additional specs -----------------------------------------------
 
 # Actual timesteps we will use for simulations - remove the final point
-# so we go from begining of start_year to end of end_year-1.
+# so we go from begining of start_year to start of end_year. For 
+# simulations will remove final point
 pg$pts <- seq(pg$start_year, pg$end_year, by = pg$timestep)
 pg$pts <- head(pg$pts, -1)
 pg$npts <- length(pg$pts)
@@ -127,9 +128,9 @@ colnames(best_estimates) <- colnames(bestEstimateYears)
 for (var in colnames(bestEstimateYears)) {
   tempValues <- bestEstimateYears[, var]
   for (year in 1:(pg$nyears-1)) {
-    indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep)
+    indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep + 1)
     yearValues <- seq(tempValues[year], tempValues[year+1], 
-                      length = 1/pg$timestep)
+                      length = (1 + 1/pg$timestep))
     best_estimates[indices, var] <- yearValues
   }  
 }
@@ -164,9 +165,9 @@ for (set in 1:number_samples) {
   for (var in colnames(paramSetYear)) {
     tempValues <- paramSetYear[, var]
     for (year in 1:(pg$nyears-1)) {
-      indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep)
+      indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep + 1)
       yearValues <- seq(tempValues[year], tempValues[year+1], 
-                        length = 1/pg$timestep)
+                        length = (1 + 1/pg$timestep))
       paramSet[indices, var] <- yearValues
     }  
   }
