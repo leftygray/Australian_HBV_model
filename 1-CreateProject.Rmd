@@ -4,31 +4,65 @@
 Authors: Richard T. Gray, Neil Bretana
 
 This Rmarkdown script is used to create a HBV modelling project specified 
-by the user. 
+by the user. The project specifications entered by the user are hardcoded 
+in the "Project specifications" chunk.
 
 ```{r setup}
+# Clear workspace
+rm(list = ls()) 
+library("dplyr")
+
+# Set working directory to source file directory first
+basePath <- getwd()
 
 ```
+
+## User inputs
+
+The following chunk is where the user enters the project specifications
 
 ```{r Project specifications}
 # Hard coded user specified project details
 
 project_name <- "Australia_HBV_estimates"
-project_directory <- file.path(pwd, "projects")
+project_directory <- file.path(basePath, "projects")
 
 start_year <- 1951
 end_year <- 2050
 timestep <- 0.1
 
-full_population_names <- c()
-population_names <- c()
+full_population_names <- c("Infants aged 0 to 4", 
+                           "Children aged 5 to 14",
+                           "Adults aged 15 to 44", 
+                           "Adults older tha 45")
+
+population_names <- c("age0to4", 
+                      "age5to14", 
+                      "age15to44", 
+                      "age45")
   
 ```
 
-```{r Parameter specification}
+## Project creation
 
-# The following constant parameters are generated for each population -
-# parameters generated for each population
+The following specifications are fixed for all models and are required 
+for the model to run (i.e. they need to be changed if the model changes)
+
+```{r Model specifications}
+# Fixed compartmental names
+full_state_names <- c("susceptible",  
+                      "acute", 
+                      "chronic", 
+                      "cleared",
+                      "immune")
+
+# Short compartmental names
+state_names <- c("s", "a", "ch", "cl", "i")
+
+```
+
+```{r Parameter specifications}
+# The following constant parameters are generated for each population 
 constNamesPops <- c("acute", "immune", "cum_acute", "cum_chronic", 
                "cum_deaths_uninf", "cum_acute_deaths",
                "cum_chronic_deaths", "pop_prop", "prog_chron",
@@ -40,8 +74,11 @@ constNamesPops <- c("acute", "immune", "cum_acute", "cum_chronic",
 constNames <- c("init_pop", "mig_series", "dis_rate", "ac_res_rate",
                 "fol_mult", "vacc_tog")
 
-timeVaryNames <- c("births", "notifications", "years")
+# Following parameters all vary over time
+timeVaryNames <- c("years", "notifications", "births")
 
+# TODO - make these population varying as well like the constants - 0 to 
+# npops
 timeVaryPops <- c("bgmort0to4", "bgmort5to14", "bgmort15to44", "bgmort45",
                   "mig0to4chronic", "mig0to4cleared", "mig0to4sus",
                   "mig5to14chronic", "mig5to14cleared", "mig5to14sus", 
@@ -50,22 +87,108 @@ timeVaryPops <- c("bgmort0to4", "bgmort5to14", "bgmort15to44", "bgmort45",
 
 ```
 
+The following chunk creates the files used for inputing parameters based 
+on the project specifications. Once these are created the user needs to
+enter input values and ranges for the model to run
 
-```{r Create directory and files}
-# Create directory
+```{r Create directories and csv files}
+# Create project directory
+projectFolder <- file.path(project_directory, project_name)
+dir.create(projectFolder, showWarnings = FALSE)
+
+# Create other directories
+dir.create(file.path(projectFolder, "results"), showWarnings = FALSE)
 
 
-# Create parameter files
+# Create parameter files -------------------------------------------------
+npops <- length(population_names)
+nyears <- end_year - start_year + 1
 
+numConstants <- npops * length(constNamesPops) + length(constNames)
 
-# Create project .rda files
+# Create constants file
+constants <- data_frame(parameter = character(numConstants),
+                        value = 0,
+                        lower = 1,
+                        upper = 1)
+
+for (param in 1:length(constNamesPops)) {
+  popParams <- paste0(constNamesPops[param], as.character(0:(npops-1)))
+  index <- (param - 1) * npops + 1
+  constants$parameter[index:(index+npops-1)] <- popParams
+}
+
+constants$parameter[(index + npops):numConstants] <- constNames
+
+write_csv(constants, file.path(projectFolder, "parameter_constants.csv"))
+
+# Create time varying paramater file
+# TODO: change when time varying population paramaters are included
+timeVarying <- as.data.frame(matrix(0, nrow = nyears, 
+  ncol = length(timeVaryNames) + length(timeVaryPops)))
+colnames(timeVarying) <- c(timeVaryNames, timeVaryPops)
+
+write_csv(timeVarying, file.path(projectFolder,
+                               "parameter_time_varying.csv"))
+
+# Create time varying relative factors file - for each time varying 
+# parameter create a start range and an upper range for the relative
+# parameter values
+timeFactors <- as.data.frame(matrix(1, nrow = ncol(timeVarying), 
+                                    ncol = 5))
+colnames(timeFactors) <- c("parameter", "start_lower", "start_upper", 
+                           "end_lower", "end_upper")
+
+timeFactors$parameter <- colnames(timeVarying)
+
+write_csv(timeFactors, file.path(projectFolder,
+                               "time_varying_ranges.csv"))
+
+# Create associated transitions and interactions files -------------------
+transitions <- as.data.frame(matrix(0, nrow = npops, ncol = npops + 1))
+colnames(transitions) <- c("population", population_names)
+transitions$population <- population_names
+
+interactions <- transitions
+
+write_csv(transitions, file.path(projectFolder,
+                               "population_transitions.csv"))
+
+write_csv(transitions, file.path(projectFolder,
+                               "population_interactions.csv"))
 
 ```
 
+The following chunk creates a project R data file for storing the project 
+variables and inputs
+
 ```{r Create project specifications list}
+# Create project specifications list
+pg <- list()
+pg$project_name <- project_name
+pg$project_directory <- project_directory
+pg$start_year <- start_year
+pg$end_year <- end_year
+pg$timestep <- timestep
+pg$full_population_names <- full_population_names
+pg$population_names <- population_names
 
+# Additional useful specs - further specs will be appended when generating
+# the parameter sets for a project
+pg$npops <- npops
+pg$years <- start_year:end_year
+pg$nyears <- nyears
 
+pg$full_state_names <- full_state_names
+pg$state_names <- state_names
 
+# Create an inputs list
+inputs <- list(constants = constants, time_varying = timeVarying,
+               time_varying_ranges = timeFactors,
+               transitions = transitions, interactions = interactions)
 
+# Create project .rda files
+save(pg, inputs, file = file.path(projectFolder,
+  paste0(project_name, ".rda")))
 
 ```
