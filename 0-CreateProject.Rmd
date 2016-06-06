@@ -120,7 +120,7 @@ for (param in 1:length(constNamesPops)) {
 
 constants$parameter[(index + npops):numConstants] <- constNames
 
-write_csv(constants, file.path(projectFolder, "parameter_constants.csv"))
+write_csv(constants, file.path(projectFolder, "parameters_constants.csv"))
 
 # Create time varying paramater file
 # TODO: change when time varying population paramaters are included
@@ -129,7 +129,7 @@ timeVarying <- as.data.frame(matrix(0, nrow = nyears,
 colnames(timeVarying) <- c(timeVaryNames, timeVaryPops)
 
 write_csv(timeVarying, file.path(projectFolder,
-                               "parameter_time_varying.csv"))
+                               "parameters_time_varying.csv"))
 
 # Create time varying relative factors file - for each time varying 
 # parameter create a start range and an upper range for the relative

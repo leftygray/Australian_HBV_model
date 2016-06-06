@@ -1,0 +1,185 @@
+# SetupHBV model 
+# ==============
+
+Authors: Richard T. Gray, Neil Bretana
+
+This script is used to create parameter sets for a project based on the 
+input files and set-up scenario runs. 
+
+```{r Setup}
+# Clear workspace
+rm(list = ls()) 
+
+# Setup directories after setting working directory to source file 
+# directory (so it is easy to move code around)
+basePath <- getwd()
+Rcode <- file.path(basePath, "code")
+
+# Load useful libraries
+source(file.path(Rcode, "LoadLibrary.R"))
+LoadLibrary("readr")
+LoadLibrary("dplyr")
+LoadLibrary("tidyr")
+
+# Project directory
+project_directory <- file.path(basePath, "projects")
+
+```
+
+## User inputs
+
+The following chunk is where the user enters project details and
+scenario specifications
+
+```{r Project specifications}
+
+project_name <- "Australia_HBV_estimates"
+
+number_samples <- 10
+
+current_year <- 2016
+
+```
+
+## Project set-up
+
+The following chunks contain the code to generate the paramter sets
+
+```{r Update project specifications}
+
+# Load current project specs and inputs
+projectFolder <- file.path(project_directory, project_name)
+load(file.path(projectFolder, paste0(project_name, ".rda")))
+
+# Add some additional specs -----------------------------------------------
+
+# Actual timesteps we will use for simulations - remove the final point
+# so we go from begining of start_year to end of end_year-1.
+pg$pts <- seq(pg$start_year, pg$end_year, by = pg$timestep)
+pg$pts <- head(pg$pts, -1)
+pg$npts <- length(pg$pts)
+
+pg$parameter_samples <- number_samples
+
+pg$current_year <- current_year
+
+# Read in input files (which have been updated by the user)
+constants <- read_csv(file.path(projectFolder,
+                                "parameters_constants.csv"))
+timeVarying <- read_csv(file.path(projectFolder,
+                                  "parameters_time_varying.csv"))
+timeFactors <-read_csv(file.path(projectFolder,
+                                 "time_varying_ranges.csv"))
+transitions <- read_csv(file.path(projectFolder,
+                               "population_transitions.csv"))
+interactions <- read_csv(file.path(projectFolder,
+                                "population_interactions.csv"))
+
+# Update inputs list
+inputs <- list(constants = constants, time_varying = timeVarying,
+               time_varying_ranges = timeFactors,
+               transitions = transitions, interactions = interactions)
+
+```
+  
+```{r Generate parameter sets}
+
+# Create function to sample from time varying factors
+randomFactors <- function(param, paramFactors) { 
+  paramValues <- filter(paramFactors, parameter == param)
+  paramStart <- runif(paramValues$start_lower, 
+                      paramValues$start_upper, 1)
+  paramEnd <- runif(paramValues$end_lower, 
+                      paramValues$end_upper, 1)
+  
+  return(seq(paramStart, paramEnd, length = pg$nyears))
+}
+
+randomParams <- function(param, constants) { 
+  paramValues <- filter(constants, parameter == param)
+  paramSample <- runif(paramValues$lower, 
+                      paramValues$upper, 1)
+  return(paramSample)
+} 
+
+# Create a best estimate parameter set ------------------------------------
+bestEstimateYears <- timeVarying
+
+# Reshape constants so they can be appended to timevarying
+constantsSpread <- constants %>%
+  select(parameter, value) %>%
+  spread(parameter, value) 
+
+bestEstimateYears <- cbind(timeVarying, constantsSpread[1, ])
+
+# Expand to all points by linear extrapolation bewteen years
+best_estimates <- as.data.frame(matrix(0, ncol = ncol(bestEstimateYears), 
+                        nrow = pg$npts))
+colnames(best_estimates) <- colnames(bestEstimateYears)
+
+for (var in colnames(bestEstimateYears)) {
+  tempValues <- bestEstimateYears[, var]
+  for (year in 1:(pg$nyears-1)) {
+    indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep)
+    yearValues <- seq(tempValues[year], tempValues[year+1], 
+                      length = 1/pg$timestep)
+    best_estimates[indices, var] <- yearValues
+  }  
+}
+
+# Create parameter set samples --------------------------------------------
+
+param_sets <- list()
+
+for (set in 1:number_samples) {
+
+  paramSetYear <- bestEstimateYears
+  
+  # Loop through time varying and sample relative factors
+  for (var in colnames(timeVarying)) {
+    tempFactors <- randomFactors(var, timeFactors)
+    tempParam <- tempFactors * timeVarying[, var]
+    paramSetYear[, var] <- tempParam
+  }
+  
+  # Loop through constants and sample
+  for (var in colnames(constantsSpread)) {
+    tempSample <- randomParams(var, constants)
+    tempParam <- tempSample * constantsSpread[, var]
+    paramSetYear[, var] <- tempParam
+  }
+  
+  # Expand to all points by linear extrapolation bewteen years
+  paramSet <- as.data.frame(matrix(0, ncol = ncol(paramSetYear), 
+                                        nrow = pg$npts))
+  colnames(paramSet) <- colnames(paramSetYear)
+  
+  for (var in colnames(paramSetYear)) {
+    tempValues <- paramSetYear[, var]
+    for (year in 1:(pg$nyears-1)) {
+      indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep)
+      yearValues <- seq(tempValues[year], tempValues[year+1], 
+                        length = 1/pg$timestep)
+      paramSet[indices, var] <- yearValues
+    }  
+  }
+  
+  # Save final parameter set in a list
+  setStr <- paste0("paramSet", toString(set))
+  param_sets[[setStr]] <- paramSet
+  
+}
+
+```
+
+```{r Save file project file}
+# Re-save projects file with updated specs, inputs and append best
+# estimates and parameter sets
+save(pg, inputs, 
+     best_estimates = best_estimates, 
+     param_sets = param_sets,
+     file = file.path(projectFolder,
+                      paste0(project_name, ".rda")))
+```
+  
+               
