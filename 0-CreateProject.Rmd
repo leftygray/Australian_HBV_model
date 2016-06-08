@@ -10,6 +10,7 @@ in the "Project specifications" chunk.
 ```{r setup}
 # Clear workspace
 rm(list = ls()) 
+library("readr")
 library("dplyr")
 
 # Set working directory to source file directory first
@@ -68,17 +69,27 @@ state_names <- c("s", "a", "ch", "cl", "i")
 ```
 
 ```{r Parameter specifications}
+
+# Note parameters that are for specifying the initial population sizes
+# so they can be stored separately
+initialPopsNames <- c("init_pop", "pop_prop_", "sus_prop_", "acute_prop_",
+                     "chronic_prop_", "clear_prop_", "immune_prop_")
+
 # The following constant parameters are generated for each population 
-constNamesPops <- c("acute", "immune", "cum_acute", "cum_chronic", 
-               "cum_deaths_uninf", "cum_acute_deaths",
-               "cum_chronic_deaths", "pop_prop", "prog_chron",
-               "clr_rate", "ac_mort_rate", "chr_mort_rate", "vac_eff",
-               "vac_prop")
+constNamesPops <- c("sus_prop_", "acute_prop_", "chronic_prop_",
+                    "clear_prop_", "immune_prop_", 
+                    "pop_prop_", "prog_chron_", 
+                    "clr_rate_", "ac_mort_rate_", 
+                    "chr_mort_rate_", "vac_eff_",
+                    "vac_prop_")
 
 # The following constant parameters are the same for all populations or
 # population agnostic.
 constNames <- c("init_pop", "mig_series", "dis_rate", "ac_res_rate",
                 "fol_mult", "vacc_tog")
+
+# Note pop_prop and init_pop are only used for setting up the initial 
+# population.
 
 # Following parameters all vary over time
 timeVaryNames <- c("years", "notifications", "births")
@@ -126,7 +137,28 @@ for (param in 1:length(constNamesPops)) {
 
 constants$parameter[(index + npops):numConstants] <- constNames
 
-write_csv(constants, file.path(projectFolder, "parameters_constants.csv"))
+# Separate initial population parameters from other parameters
+fullInitialNames <- character()
+for (param in 1:length(initialPopsNames)){
+  if (initialPopsNames[param] == "init_pop") {
+    fullInitialNames <- c(fullInitialNames, initialPopsNames[param])
+  } else {
+    initialParams <- paste0(initialPopsNames[param],
+                            as.character(0:(npops-1)))
+    fullInitialNames <- c(fullInitialNames, initialParams)
+  }
+}
+
+initialPops <- constants %>%
+  filter(parameter %in% fullInitialNames)
+constants <- constants %>%
+  filter(!(parameter %in% fullInitialNames))
+
+# Write constants to file
+write_csv(initialPops, file.path(projectFolder,
+                                    "initial_populations.csv"))
+write_csv(constants, file.path(projectFolder,
+                                    "parameters_constants.csv"))
 
 # Create time varying paramater file
 # TODO: change when time varying population paramaters are included
@@ -189,9 +221,11 @@ pg$nyears <- nyears
 
 pg$full_state_names <- full_state_names
 pg$state_names <- state_names
+pg$nstates <- length(state_names)
 
 # Create an inputs list
-inputs <- list(constants = constants, time_varying = timeVarying,
+inputs <- list(initial_pops = initialPops, constants = constants,
+               time_varying = timeVarying,
                time_varying_ranges = timeFactors,
                transitions = transitions, interactions = interactions)
 

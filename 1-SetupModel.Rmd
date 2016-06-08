@@ -69,6 +69,8 @@ pg$parameter_samples <- number_samples
 pg$current_year <- current_year
 
 # Read in input files (which have been updated by the user)
+initialPops <- read_csv(file.path(projectFolder,
+                                "initial_populations.csv"))
 constants <- read_csv(file.path(projectFolder,
                                 "parameters_constants.csv"))
 timeVarying <- read_csv(file.path(projectFolder,
@@ -81,7 +83,8 @@ interactions <- read_csv(file.path(projectFolder,
                                 "population_interactions.csv"))
 
 # Update inputs list
-inputs <- list(constants = constants, time_varying = timeVarying,
+inputs <- list(initial_pops = initialPops, 
+               constants = constants, time_varying = timeVarying,
                time_varying_ranges = timeFactors,
                transitions = transitions, interactions = interactions)
 
@@ -92,7 +95,7 @@ parameter set and the ramdomly sampled parameter sets for the project.
   
 ```{r Generate parameter sets}
 
-# Create function to sample from time varying factors
+# Create function to sample from time varying factors and constants range
 randomFactors <- function(param, paramFactors) { 
   paramValues <- filter(paramFactors, parameter == param)
   paramStart <- runif(paramValues$start_lower, 
@@ -135,6 +138,24 @@ for (var in colnames(bestEstimateYears)) {
   }  
 }
 
+# Set up best estimate initial population
+init_pop <- filter(initialPops, parameter == "init_pop")$value
+
+initial_pop <- initialPops %>%
+  select(parameter, value) %>%
+  filter(parameter != "init_pop")
+
+initialPopMat <- as.data.frame(matrix(initial_pop$value, 
+                                      ncol = pg$nstates + 1,  
+                      nrow = pg$npops))
+colnames(initialPopMat) <- c(pg$state_names, "pop_prop")
+rownames(initialPopMat) <- pg$population_names
+
+popProp <- init_pop * initialPopMat$pop_prop
+
+best_initial_pop <- apply(initialPopMat[, 1:pg$nstates], 2, 
+                          function(x) x * popProp)
+
 # Create parameter set samples --------------------------------------------
 
 param_sets <- list()
@@ -171,6 +192,9 @@ for (set in 1:number_samples) {
       paramSet[indices, var] <- yearValues
     }  
   }
+  
+  # Set up initial population size
+  
   
   # Save final parameter set in a list
   setStr <- paste0("paramSet", toString(set))
