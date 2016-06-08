@@ -68,17 +68,22 @@ state_names <- c("s", "a", "ch", "cl", "i")
 ```
 
 ```{r Parameter specifications}
+
 # The following constant parameters are generated for each population 
-constNamesPops <- c("acute", "immune", "cum_acute", "cum_chronic", 
-               "cum_deaths_uninf", "cum_acute_deaths",
-               "cum_chronic_deaths", "pop_prop", "prog_chron",
-               "clr_rate", "ac_mort_rate", "chr_mort_rate", "vac_eff",
-               "vac_prop")
+constNamesPops <- c("sus_prop_", "acute_prop_", "chronic_prop_",
+                    "clear_prop_", "immune_prop_", 
+                    "pop_prop_", "prog_chron_", 
+                    "clr_rate_", "ac_mort_rate_", 
+                    "chr_mort_rate_", "vac_eff_",
+                    "vac_prop_")
 
 # The following constant parameters are the same for all populations or
 # population agnostic.
 constNames <- c("init_pop", "mig_series", "dis_rate", "ac_res_rate",
                 "fol_mult", "vacc_tog")
+
+# Note pop_prop and init_pop are only used for setting up the initial 
+# population.
 
 # Following parameters all vary over time
 timeVaryNames <- c("years", "notifications", "births")
