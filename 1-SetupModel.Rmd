@@ -193,6 +193,9 @@ for (set in 1:number_samples) {
     }  
   }
   
+  # Set up initial population size
+  
+  
   # Save final parameter set in a list
   setStr <- paste0("paramSet", toString(set))
   param_sets[[setStr]] <- paramSet
