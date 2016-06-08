@@ -221,6 +221,7 @@ pg$nyears <- nyears
 
 pg$full_state_names <- full_state_names
 pg$state_names <- state_names
+pg$nstates <- length(state_names)
 
 # Create an inputs list
 inputs <- list(initial_pops = initialPops, constants = constants,
