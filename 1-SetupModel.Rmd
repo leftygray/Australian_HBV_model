@@ -75,7 +75,7 @@ constants <- read_csv(file.path(projectFolder,
                                 "parameters_constants.csv"))
 timeVarying <- read_csv(file.path(projectFolder,
                                   "parameters_time_varying.csv"))
-timeFactors <-read_csv(file.path(projectFolder,
+timeFactors <- read_csv(file.path(projectFolder,
                                  "time_varying_ranges.csv"))
 transitions <- read_csv(file.path(projectFolder,
                                "population_transitions.csv"))
@@ -98,28 +98,31 @@ parameter set and the ramdomly sampled parameter sets for the project.
 # Create function to sample from time varying factors and constants range
 randomFactors <- function(param, paramFactors) { 
   paramValues <- filter(paramFactors, parameter == param)
-  paramStart <- runif(paramValues$start_lower, 
-                      paramValues$start_upper, 1)
-  paramEnd <- runif(paramValues$end_lower, 
-                      paramValues$end_upper, 1)
+  paramStart <- runif(1, paramValues$start_lower, 
+                      paramValues$start_upper)
+  paramEnd <- runif(1, paramValues$end_lower, 
+                      paramValues$end_upper)
   
   return(seq(paramStart, paramEnd, length = pg$nyears))
 }
 
 randomParams <- function(param, constants) { 
   paramValues <- filter(constants, parameter == param)
-  paramSample <- runif(paramValues$lower, 
-                      paramValues$upper, 1)
+  paramSample <- runif(1, paramValues$lower, 
+                      paramValues$upper)
   return(paramSample)
 } 
 
-# Create a best estimate parameter set ------------------------------------
+# Create a best estimate parameter set -----------------------------------
 bestEstimateYears <- timeVarying
 
 # Reshape constants so they can be appended to timevarying
 constantsSpread <- constants %>%
-  spread(parameter, value) %>%
-  select(-lower, -upper)
+  select(parameter, value)
+parameters <- constantsSpread$parameter
+constantsSpread <- as.data.frame(t(constantsSpread[,-1]))
+colnames(constantsSpread) <- parameters
+rownames(constantsSpread) <- NULL
 
 bestEstimateYears <- cbind(timeVarying, constantsSpread[1, ])
 
