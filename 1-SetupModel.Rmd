@@ -118,8 +118,8 @@ bestEstimateYears <- timeVarying
 
 # Reshape constants so they can be appended to timevarying
 constantsSpread <- constants %>%
-  select(parameter, value) %>%
-  spread(parameter, value) 
+  spread(parameter, value) %>%
+  select(-lower, -upper)
 
 bestEstimateYears <- cbind(timeVarying, constantsSpread[1, ])
 
@@ -142,7 +142,6 @@ for (var in colnames(bestEstimateYears)) {
 init_pop <- filter(initialPops, parameter == "init_pop")$value
 
 initial_pop <- initialPops %>%
-  select(parameter, value) %>%
   filter(parameter != "init_pop")
 
 initialPopMat <- as.data.frame(matrix(initial_pop$value, 
@@ -159,6 +158,7 @@ best_initial_pop <- apply(initialPopMat[, 1:pg$nstates], 2,
 # Create parameter set samples --------------------------------------------
 
 param_sets <- list()
+param_initial_pops <- list()
 
 for (set in 1:number_samples) {
 
@@ -193,28 +193,42 @@ for (set in 1:number_samples) {
     }  
   }
   
-  # Set up initial population size
+  # Set up initial population size for each parameter set
+  tempInitPop <- randomParams("init_pop", initialPops)
   
+  tempInitialPop <- c()
+  for (param in initial_pop$parameter) {
+    paramSample <- randomParams(param, initialPops)
+    tempInitialPop <- c(tempInitialPop, paramSample)
+  }
   
-  # Save final parameter set in a list
+  tempPopMat <- as.data.frame(matrix(tempInitialPop, 
+                                        ncol = pg$nstates + 1,  
+                        nrow = pg$npops))
+  colnames(tempPopMat) <- c(pg$state_names, "pop_prop")
+  rownames(tempPopMat) <- pg$population_names
+  
+  tempPopProp <- tempInitPop * tempPopMat$pop_prop
+  
+  paramPop <- apply(tempPopMat[, 1:pg$nstates], 2, 
+                            function(x) x * tempPopProp)
+  
+  # Save final parameter set and initial populations in a list
   setStr <- paste0("paramSet", toString(set))
   param_sets[[setStr]] <- paramSet
+  param_initial_pops[[setStr]] <- paramPop
   
 }
 
 ```
 
-```{r Setup intial populations}
-
-```
-
-
-The final chunnk updates the project file for running in the model. 
+The final chunk updates the project file for running in the model. 
 
 ```{r Save file project file}
 # Re-save projects file with updated specs, inputs and append best
 # estimates and parameter sets
-save(pg, inputs, best_estimates, param_sets,
+save(pg, inputs, best_estimates, param_sets, best_initial_pop,
+     param_initial_pops,
      file = file.path(projectFolder,
                       paste0(project_name, ".rda")))
 ```

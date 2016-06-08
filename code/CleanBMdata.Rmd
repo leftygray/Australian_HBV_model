@@ -28,8 +28,8 @@ LoadLibrary("dplyr")
 LoadLibrary("tidyr")
 
 # Output file names
-paramFile1 <- "parameters_constant.csv"
-paramFile2 <- "parameters_time_varying.csv"
+paramFile1 <- "parameters_constant-BM.csv"
+paramFile2 <- "parameters_time_varying-BM.csv"
 
 ```
 
