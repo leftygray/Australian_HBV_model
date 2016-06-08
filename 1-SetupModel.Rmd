@@ -180,14 +180,17 @@ for (set in 1:number_samples) {
 
 ```
 
+```{r Setup intial populations}
+
+```
+
+
 The final chunnk updates the project file for running in the model. 
 
 ```{r Save file project file}
 # Re-save projects file with updated specs, inputs and append best
 # estimates and parameter sets
-save(pg, inputs, 
-     best_estimates = best_estimates, 
-     param_sets = param_sets,
+save(pg, inputs, best_estimates, param_sets,
      file = file.path(projectFolder,
                       paste0(project_name, ".rda")))
 ```
