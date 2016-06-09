@@ -28,7 +28,7 @@ source(file.path(Rcode, "HBVmodel.R"))
 
 ```{r User specifications}
 # Specify project to run
-project <- "Australia_HBV_model"
+project <- "Australia_HBV_estimates-BM"
 
 # Options
 runSamples <- FALSE
@@ -36,8 +36,8 @@ runSamples <- FALSE
 ```
 
 ```{r Load project}
-# This loads pg, inputs, best_estimates, param_sets to
-# the workspace.
+# This loads pg, inputs, best_estimates, param_sets, best_initial_pop
+# param_initial_pops to the workspace.
 load(file.path(projectFolder, project, paste0(project, ".rda")))
 
 ```
@@ -45,13 +45,13 @@ load(file.path(projectFolder, project, paste0(project, ".rda")))
 ```{r Run model}
 
 # Run model on best estimates
-bestResults <- HBVmodel(pg, bestEstimates, initialPop)
+bestResults <- HBVmodel(pg, best_estimates, best_initial_pop)
 
 # Run sampled parameter sets
-if (runSamples) {
-  
-  
-}
+# if (runSamples) {
+#   
+#   
+# }
 
 
 ```

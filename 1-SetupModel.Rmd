@@ -34,7 +34,7 @@ scenario specifications.
 ```{r Project specifications}
 
 # Project to load and setup
-project_name <- "Australia_HBV_estimates"
+project_name <- "Australia_HBV_estimates-BM"
 
 # Number of parameter sets to run
 number_samples <- 10

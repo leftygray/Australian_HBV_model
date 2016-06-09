@@ -6,7 +6,7 @@
 
 # Authors: Richard T. Gray, Neil Bratana
 
-HbvModel <- function(pg, pm, initialPop, transitions = NULL, 
+HBVmodel <- function(pg, pm, initialPop, transitions = NULL, 
                      interactions = NULL, pts) {
   # Function to simulate the HBV model equations 
   # 
