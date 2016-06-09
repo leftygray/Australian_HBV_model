@@ -1,4 +1,10 @@
+# Ignore these files and directories
 outputs/
-projects/
+projects/*
 .Rhistory
+
+# But not these files and directories
+!projects/Australia_HBV_estimates-BM/
+
+
 
