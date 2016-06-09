@@ -14,25 +14,31 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   #   pg: list containing project specifications
   #   pm: data frame with model parameters across columns and the value
   #     at each timestep down the rows
-  #   initialPop: A 2D matrix (named?) giving the initial populaton sizes
+  #   initialPop: A named matrix giving the initial populaton sizes
   #     for each population and state. Each row represents an different 
   #     population and each column represents a different state
-  #   transitions: A 2D array (matrix?) showing the rates people move from 
+  #   transitions: A named matrix showing the rates people move from 
   #     one population to another. The rows show the population people move
   #     from and the columns show the population people move to.
-  #   interactions: A 2D array (matrix?) showing which populations have 
+  #   interactions: A named matrix showing which populations have 
   #     at-risk interactions
-  #   pts: Time points in years the model is simulated for
+  #   pts: The simulation time points in years 
   # Returns: 
   #   A list containing the following outputs:
-  #     allPops: A 3D array showing the population size in each population
-  #       and state for each time point
-  #     newInfections:
-  #     newHBVdeaths:
-  #     newVaccinations: ??
-  #     newMigrants: ??
-  #     newTreatments:
-  #     newCured:
+  #     allPops: A 3D array containing the population size in each
+  #      population and state for each time point
+  #     newInfections: A matrix containing the number of new infections
+  #      each time step for each population
+  #     newHBVdeaths:  A matrix containing the number of HBV deaths each 
+  #       time step for each population
+  #     newVaccinations: A matrix containing the number of new vaccinations
+  #       each time step for each population
+  #     newMigrants: A matrix containing the number of new migrants
+  #       entering the population each time step for each population
+  #     newTreatments: A matrix containing the number of new treatments
+  #       each time step for each population
+  #     newCured: A matrix containing the number of people who clear their
+  #       infection each time step for each population
   #
   # TODO: 
   #   newDiagnoses (??)

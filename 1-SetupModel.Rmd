@@ -1,5 +1,5 @@
-# SetupHBV model 
-# ==============
+# Setup HBV model 
+# ===============
 
 Authors: Richard T. Gray, Neil Bretana
 

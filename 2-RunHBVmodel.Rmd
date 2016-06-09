@@ -3,7 +3,7 @@
 
 Authors: Richard T. Gray, Neil Bretana
 
-This script is used to create a project and run in the HBV model. 
+This script is used to load a project and run in the HBV model. 
 
 ```{r Initialize script}
 # Clear workspace
@@ -26,6 +26,8 @@ source(file.path(Rcode, "HBVmodel.R"))
 
 ```
 
+## User specifications
+
 ```{r User specifications}
 # Specify project to run
 project <- "Australia_HBV_estimates-BM"
@@ -35,12 +37,18 @@ runSamples <- FALSE
 
 ```
 
+## Main script
+
+The first chunk loads all the project specifications and inputs.
+
 ```{r Load project}
 # This loads pg, inputs, best_estimates, param_sets, best_initial_pop
 # param_initial_pops, transitions to the workspace.
 load(file.path(projectFolder, project, paste0(project, ".rda")))
 
 ```
+
+The next chunk runs the all the simulations in a project.
 
 ```{r Run model}
 
@@ -57,7 +65,5 @@ bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
 
 # Stop the clock
 toc <- proc.time() - tic
-
-# 
 
 ```
