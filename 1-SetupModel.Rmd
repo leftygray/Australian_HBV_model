@@ -82,6 +82,13 @@ transitions <- read_csv(file.path(projectFolder,
 interactions <- read_csv(file.path(projectFolder,
                                 "population_interactions.csv"))
 
+# Convert transistions and interactions into matrices
+transitions <- as.matrix(transitions[, 2:(pg$npops + 1)])
+rownames(transitions) <- colnames(transitions)
+
+interactions <- as.matrix(interactions[, 2:(pg$npops + 1)])
+rownames(interactions) <- colnames(interactions)
+
 # Update inputs list
 inputs <- list(initial_pops = initialPops, 
                constants = constants, time_varying = timeVarying,
@@ -231,7 +238,7 @@ The final chunk updates the project file for running in the model.
 # Re-save projects file with updated specs, inputs and append best
 # estimates and parameter sets
 save(pg, inputs, best_estimates, param_sets, best_initial_pop,
-     param_initial_pops,
+     param_initial_pops, transitions = transitions, 
      file = file.path(projectFolder,
                       paste0(project_name, ".rda")))
 ```

@@ -9,6 +9,8 @@ This script is used to create a project and run in the HBV model.
 # Clear workspace
 rm(list = ls()) 
 
+print("Starting HBV modelling ...")
+
 # Setup directories after setting working directory to source file 
 # directory (so it is easy to move code around)
 basePath <- getwd()
@@ -37,15 +39,19 @@ runSamples <- FALSE
 
 ```{r Load project}
 # This loads pg, inputs, best_estimates, param_sets, best_initial_pop
-# param_initial_pops to the workspace.
+# param_initial_pops, transitions to the workspace.
 load(file.path(projectFolder, project, paste0(project, ".rda")))
 
 ```
 
 ```{r Run model}
 
+# Start clock
+tic <- proc.time()
+
 # Run model on best estimates
-bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts)
+bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
+                        transitions)
 
 # Run sampled parameter sets
 # if (runSamples) {
@@ -53,5 +59,9 @@ bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts)
 #   
 # }
 
+# Stop the clock
+toc <- proc.time() - tic
+
+# 
 
 ```
