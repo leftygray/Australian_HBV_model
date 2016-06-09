@@ -23,7 +23,7 @@ vac_prop_0,0.9,0.675,1.125
 vac_prop_1,0.6,0.45,0.75
 vac_prop_2,0.03,0.0225,0.0375
 vac_prop_3,0,0,0
-mig_series,0,0,0
+mig_series,1.27273,0.9545475,1.5909125
 dis_rate,6,4.5,7.5
 ac_res_rate,4,3,5
 fol_mult,5,3.75,6.25

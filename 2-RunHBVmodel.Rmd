@@ -45,7 +45,7 @@ load(file.path(projectFolder, project, paste0(project, ".rda")))
 ```{r Run model}
 
 # Run model on best estimates
-bestResults <- HBVmodel(pg, best_estimates, best_initial_pop)
+bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts)
 
 # Run sampled parameter sets
 # if (runSamples) {

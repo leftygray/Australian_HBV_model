@@ -1,5 +1,5 @@
 population,age0to4,age5to14,age15to44,age45
-age0to4,0,0,0,0
-age5to14,0,0,0,0
-age15to44,0,0,0,0
+age0to4,0,0.2,0,0
+age5to14,0,0,0.1,0
+age15to44,0,0,0,0.0333
 age45,0,0,0,0
