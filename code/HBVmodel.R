@@ -78,10 +78,23 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   
   # Force of infection calculations ---------------------------------------
   # TODO: add FOI equations and parameters to model
-  f_o_i_0 <- 0
-  f_o_i_1 <- 0 
-  f_o_i_2 <- 0
-  f_o_i_3 <- 0
+  #allPops[, , time] ["age0to4", "s", ]
+  f_o_i_0 <- pm$fol_mult * (2.77966E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
+  f_o_i_1 <- pm$fol_mult * (2.77966E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
+                            + 2.77966E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
+  f_o_i_2 <- pm$fol_mult * (3.70621E-09 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
+                            + 3.70621E-09 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
+                            + 3.70621E-09 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
+                            + 3.70621E-09 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
+  f_o_i_3 <- pm$fol_mult * (9.26553E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
+                            + 9.26553E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
+                            + 9.26553E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
+                            + 9.26553E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
   
   forceInfection <- matrix(0, ncol = 1, nrow = npops)
   forceInfection[1] <- f_o_i_0
