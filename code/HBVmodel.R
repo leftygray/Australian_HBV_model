@@ -76,32 +76,6 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   newTreatments <- initResultsMatrix
   newCured <- initResultsMatrix
   
-  # Force of infection calculations ---------------------------------------
-  # TODO: add FOI equations and parameters to model
-  #allPops[, , time] ["age0to4", "s", ]
-  f_o_i_0 <- pm$fol_mult * (2.77966E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
-  f_o_i_1 <- pm$fol_mult * (2.77966E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
-                            + 2.77966E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
-  f_o_i_2 <- pm$fol_mult * (3.70621E-09 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
-                            + 3.70621E-09 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
-                            + 3.70621E-09 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
-                            + 3.70621E-09 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
-  f_o_i_3 <- pm$fol_mult * (9.26553E-10 * (allPops["age0to4", "a", 1] + 0.16 * allPops["age0to4", "ch", 1]) 
-                            + 9.26553E-10 * (allPops["age5to14", "a", 1] + 0.16 * allPops["age5to14", "ch", 1]) 
-                            + 9.26553E-10 * (allPops["age15to44", "a", 1] + 0.16 * allPops["age15to44", "ch", 1]) 
-                            + 9.26553E-10 * (allPops["age45", "a", 1] + 0.16 * allPops["age45", "ch", 1])) 
-  
-  forceInfection <- matrix(0, ncol = 1, nrow = npops)
-  forceInfection[1] <- f_o_i_0
-  forceInfection[2] <- f_o_i_1
-  forceInfection[3] <- f_o_i_2
-  forceInfection[4] <- f_o_i_3
-  
   # Progression of HBV only affects acute and chronics --------------------
   progress <- matrix(0, ncol = npts + 1, nrow = npops)
   progress[1, ] <- pm$ac_res_rate * pm$prog_chron_0 #age group 0 to 4
@@ -219,7 +193,41 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     oldPop <- allPops[, , time - 1]
     newPop <- allPops[, , time]
     
-    # Equations 
+    # Force of infection calculations ---------------------------------------
+    # TODO: add FOI equations and parameters to model
+    #allPops[, , time] ["age0to4", "s", ]
+    
+    acuteBeta <- matrix(c(2.77966E-10, 2.77966E-10, 2.77966E-10, 
+                          2.77966E-10, 2.77966E-10, 2.77966E-10, 
+                          2.77966E-10, 2.77966E-10, 3.70621E-09, 
+                          3.70621E-09, 3.70621E-09, 3.70621E-09,
+                          9.26553E-10, 9.26553E-10, 9.26553E-10, 
+                          9.26553E-10), nrow = 4, ncol = 4)
+    acuteBeta <- t(acuteBeta)
+    
+    chronicBeta <- 0.16
+    
+    f_o_i_0 <- pm$fol_mult * sum(acuteBeta[, 1] * oldPop[, "a"] + 
+                                    chronicBeta *
+                                oldPop[, "ch"])
+    
+    f_o_i_1 <- pm$fol_mult * sum(acuteBeta[, 2] * oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"])
+    
+    f_o_i_2 <- pm$fol_mult * sum(acuteBeta[, 3] * oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"])
+    
+    f_o_i_3 <- pm$fol_mult * sum(acuteBeta[, 4] * oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"])
+    
+    
+    forceInfection <- matrix(0, ncol = 1, nrow = npops)
+    forceInfection[1] <- f_o_i_0
+    forceInfection[2] <- f_o_i_1
+    forceInfection[3] <- f_o_i_2
+    forceInfection[4] <- f_o_i_3
+    
+    # Equations -----------------------------------------------------------
 
     newPop[, "s"] <- oldPop[, "s"] + 
       as.numeric(transitions %*% oldPop[, "s"]) +
