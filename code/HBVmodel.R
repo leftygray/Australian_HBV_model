@@ -207,18 +207,18 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     
     chronicBeta <- 0.16
     
-    f_o_i_0 <- pm$fol_mult * sum(acuteBeta[, 1] * oldPop[, "a"] + 
+    f_o_i_0 <- pm$fol_mult * sum(acuteBeta[, 1] * (oldPop[, "a"] + 
                                     chronicBeta *
-                                oldPop[, "ch"])
+                                oldPop[, "ch"]))
     
-    f_o_i_1 <- pm$fol_mult * sum(acuteBeta[, 2] * oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"])
+    f_o_i_1 <- pm$fol_mult * sum(acuteBeta[, 2] * (oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"]))
     
-    f_o_i_2 <- pm$fol_mult * sum(acuteBeta[, 3] * oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"])
+    f_o_i_2 <- pm$fol_mult * sum(acuteBeta[, 3] * (oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"]))
     
-    f_o_i_3 <- pm$fol_mult * sum(acuteBeta[, 4] * oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"])
+    f_o_i_3 <- pm$fol_mult * sum(acuteBeta[, 4] * (oldPop[, "a"] + chronicBeta *
+                                           oldPop[, "ch"]))
     
     
     forceInfection <- matrix(0, ncol = 1, nrow = npops)
