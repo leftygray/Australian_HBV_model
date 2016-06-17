@@ -188,14 +188,13 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   
   # Loop over state equations ---------------------------------------------
   
-  for (time in 2:npts) {
+  for (time in 2:npts) { 
     
     oldPop <- allPops[, , time - 1]
     newPop <- allPops[, , time]
     
     # Force of infection calculations ---------------------------------------
     # TODO: add FOI equations and parameters to model
-    #allPops[, , time] ["age0to4", "s", ]
     
     acuteBeta <- matrix(c(2.77966E-10, 2.77966E-10, 2.77966E-10, 
                           2.77966E-10, 2.77966E-10, 2.77966E-10, 
@@ -207,25 +206,25 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     
     chronicBeta <- 0.16
     
-    f_o_i_0 <- pm$fol_mult * sum(acuteBeta[, 1] * (oldPop[, "a"] + 
+    f_o_i_0 <- pm$fol_mult[time] * sum(acuteBeta[, 1] * (oldPop[, "a"] + 
                                     chronicBeta *
                                 oldPop[, "ch"]))
     
-    f_o_i_1 <- pm$fol_mult * sum(acuteBeta[, 2] * (oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"]))
+    f_o_i_1 <- pm$fol_mult[time] * sum(acuteBeta[, 2] * (oldPop[, "a"] + chronicBeta * 
+                                                     oldPop[, "ch"]))
     
-    f_o_i_2 <- pm$fol_mult * sum(acuteBeta[, 3] * (oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"]))
+    f_o_i_2 <- pm$fol_mult[time] * sum(acuteBeta[, 3] * (oldPop[, "a"] + chronicBeta *
+                                                     oldPop[, "ch"]))
     
-    f_o_i_3 <- pm$fol_mult * sum(acuteBeta[, 4] * (oldPop[, "a"] + chronicBeta *
-                                           oldPop[, "ch"]))
+    f_o_i_3 <- pm$fol_mult[time] * sum(acuteBeta[, 4] * (oldPop[, "a"] + chronicBeta *
+                                                     oldPop[, "ch"]))
     
     
     forceInfection <- matrix(0, ncol = 1, nrow = npops)
-    forceInfection[1] <- f_o_i_0
-    forceInfection[2] <- f_o_i_1
-    forceInfection[3] <- f_o_i_2
-    forceInfection[4] <- f_o_i_3
+    forceInfection[1,] <- f_o_i_0
+    forceInfection[2,] <- f_o_i_1
+    forceInfection[3,] <- f_o_i_2
+    forceInfection[4,] <- f_o_i_3
     
     # Equations -----------------------------------------------------------
 
