@@ -214,9 +214,9 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
       (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
     
     forceInfection[3, ] <- pm$fol_mult[time] * sum(acuteBeta[, 3] * (oldPop[, "a"] + chronicBeta *
-                                                                      oldPop[, "ch"]))
+                                                                      oldPop[, "ch"])) / sum(oldPop)
     forceInfection[4, ] <- pm$fol_mult[time] * sum(acuteBeta[, 4] * (oldPop[, "a"] + chronicBeta *
-                                                                      oldPop[, "ch"]))
+                                                                      oldPop[, "ch"])) / sum(oldPop)
     
     # Equations -----------------------------------------------------------
 
