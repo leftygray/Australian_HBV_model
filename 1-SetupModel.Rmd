@@ -13,7 +13,10 @@ rm(list = ls())
 # Setup directories after setting working directory to source file 
 # directory (so it is easy to move code around)
 basePath <- getwd()
-Rcode <- file.path(basePath, "code")
+#basePath <- c()
+basePath
+#Rcode <- file.path(basePath, "code")
+Rcode <- file.path(basePath)
 
 # Load useful libraries
 source(file.path(Rcode, "LoadLibrary.R"))
@@ -23,7 +26,7 @@ LoadLibrary("tidyr")
 
 # Project directory
 project_directory <- file.path(basePath, "projects")
-
+project_directory
 ```
 
 ## User inputs
@@ -34,7 +37,7 @@ scenario specifications.
 ```{r Project specifications}
 
 # Project to load and setup
-project_name <- "test_project"
+project_name <- "Australia_HBV_estimates-BM"
 
 # Number of parameter sets to run
 number_samples <- 10
@@ -52,8 +55,12 @@ current_year <- 2016
 ```{r Update project specifications}
 
 # Load current project specs and inputs
-projectFolder <- file.path(project_directory, project_name)
-load(file.path(projectFolder, paste0(project_name, ".rda")))
+#projectFolder <- file.path(project_directory, project_name)
+projectFolder <- ("/Users/NeilBretana/Desktop/Australian_HBV_model/projects/Australia_HBV_estimates-BM")
+projectFolder
+#load(file.path(projectFolder, paste0(project_name, ".rda")))
+load(file.path("/Users/NeilBretana/Desktop/Australian_HBV_model/projects/Australia_HBV_estimates-BM", paste0(project_name, ".rda")))
+#load(file.path(projectFolder))
 
 # Add some additional specs -----------------------------------------------
 
@@ -69,8 +76,7 @@ pg$parameter_samples <- number_samples
 pg$current_year <- current_year
 
 # Read in input files (which have been updated by the user)
-initialPops <- read_csv(file.path(projectFolder,
-                                "initial_populations.csv"))
+initialPops <- read_csv(file.path(projectFolder,                                "initial_populations.csv"))
 constants <- read_csv(file.path(projectFolder,
                                 "parameters_constants.csv"))
 timeVarying <- read_csv(file.path(projectFolder,

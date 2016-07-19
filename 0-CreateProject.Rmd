@@ -12,6 +12,7 @@ in the "Project specifications" chunk.
 rm(list = ls()) 
 library("readr")
 library("dplyr")
+library("ggplot2")
 
 # Set working directory to source file directory first
 basePath <- getwd()
