@@ -2,6 +2,7 @@
 outputs/
 projects/*
 .Rhistory
+projects/Australia_HBV_estimates-BM/results/
 
 # But not these files and directories
 !projects/Australia_HBV_estimates-BM/
