@@ -13,10 +13,7 @@ rm(list = ls())
 # Setup directories after setting working directory to source file 
 # directory (so it is easy to move code around)
 basePath <- getwd()
-#basePath <- c()
-basePath
-#Rcode <- file.path(basePath, "code")
-Rcode <- file.path(basePath)
+Rcode <- file.path(basePath, "code")
 
 # Load useful libraries
 source(file.path(Rcode, "LoadLibrary.R"))
