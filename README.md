@@ -33,7 +33,7 @@ All the project files are stored in 6 main directories. This project has two lay
 
 #### code ####
 
-Contains specific functions and scripts used by the main model. This folder also contains the original files for Ben Cowie's Berkeley Madonna model. 
+Contains specific functions and scripts used by the main modeling scripts. This folder also contains the original files for Ben Cowie's Berkeley Madonna model. 
 
 #### data ####
 
@@ -41,16 +41,14 @@ Contains the data sets used in the original Berkeley Madonna model as well as an
 
 #### docs ####
 
-- manuscripts - papers, reports, etc based on the results of the model
-- Other documents we are writing. 
-
-#### misc ####
-
-Contains any miscellaneous files associated 
-
-#### outputs ####
+Contains any documents we have written relation to the model and its development such as manuscripts, papers, reports, etc. Project specific documents are contained within the associated projects folder.
 
 #### projects ####
+
+The projects folder contains a sub-folder for each individual project run in the model. 
+
+
+
 
 
 

@@ -89,7 +89,7 @@ popSizes <- popSizes %>% # add pts as well
 #            population = colSums(popSizes))
 
 totalPop <- popSizes %>%
-  group_by(year) %>%
+  group_by(time_step) %>%
   summarise(totalpop = sum(popsize)) 
 
 totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
@@ -135,7 +135,15 @@ agePopPlot <- ggplot(data = plotAgePops,
 infectSizes <-  popSizes %>%
   group_by(year, age_group) %>%
   filter(state != "s") %>% # exclude susceptibles
-  summarise(totalpop = sum(popsize)) 
+  summarise(infectpop = sum(popsize)) %>%
+  ungroup() %>%
+  arrange(age_group) %>%
+  mutate(popsize = popSizesAge$totalpop,
+    prevalence = infectpop / popSizesAge$totalpop)
+
+# Prevalence overall population
+
+# Prevalence by age group
 
 # Plot of population size in every group
 plotPops <- popSizes
@@ -427,7 +435,9 @@ incidencePlot <- ggplot(data = newInfections,
 # # HBVtreatmentsPlot
 # 
 # #HBV deaths
-# HBVdeaths0 <- NULL
+HBVdeaths0 <- data.frame(n = c(bestResults$newHBVdeaths[1,]),
+                         npts = pg$pts,
+                         pops = "age0to4")
 # HBVdeaths0$n <- c(bestResults$newHBVdeaths[1,])
 # HBVdeaths0$npts <- c(1:length(bestResults$newHBVdeaths[1,]))
 # HBVdeaths0$pops <- "age0to4"
@@ -510,5 +520,6 @@ incidencePlot
 ```{r Insert figure 5, include = TRUE}
 allPopsPlot
 ```
+
 
 
