@@ -47,17 +47,11 @@ current_year <- 2016
 
 ## Project set-up
 
-
-
 ```{r Update project specifications}
 
 # Load current project specs and inputs
-#projectFolder <- file.path(project_directory, project_name)
-projectFolder <- ("/Users/NeilBretana/Desktop/Australian_HBV_model/projects/Australia_HBV_estimates-BM")
-projectFolder
-#load(file.path(projectFolder, paste0(project_name, ".rda")))
-load(file.path("/Users/NeilBretana/Desktop/Australian_HBV_model/projects/Australia_HBV_estimates-BM", paste0(project_name, ".rda")))
-#load(file.path(projectFolder))
+projectFolder <- file.path(project_directory, project_name)
+load(file.path(projectFolder, paste0(project_name, ".rda")))
 
 # Add some additional specs -----------------------------------------------
 
@@ -73,7 +67,8 @@ pg$parameter_samples <- number_samples
 pg$current_year <- current_year
 
 # Read in input files (which have been updated by the user)
-initialPops <- read_csv(file.path(projectFolder,                                "initial_populations.csv"))
+initialPops <- read_csv(file.path(projectFolder, 
+                                  "initial_populations.csv"))
 constants <- read_csv(file.path(projectFolder,
                                 "parameters_constants.csv"))
 timeVarying <- read_csv(file.path(projectFolder,
