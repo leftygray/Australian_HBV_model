@@ -49,11 +49,13 @@ The following R markdown scripts create specific projects, run the HBV model, an
 
 - **3-SummaryResults.Rmd**: This script is used to produce figures of summary results for a specified project. It is written as an R markdown document so the figures can be generated as part of a summary results Word document using knitr. 
 
+Note as these are scripts, not functions, care should be taken to ensure the project specifications are correct before running a script especially after if any updates have been pulled from the repository.  
+
 _Main directory sub-directories_
 
 #### code ####
 
-Contains specific functions and scripts used by the main modeling scripts. This directory also contains the original files for Ben Cowie's Berkeley Madonna model. 
+Contains specific functions and scripts used by the main modelling scripts. This directory also contains the original files for Ben Cowie's Berkeley Madonna model. 
 
 #### data ####
 
@@ -72,6 +74,8 @@ The projects directory contains a sub-directory for each individual project crea
 - a results directory where project specific figures and outputs are stored.
 - a docs directory where project specific documents (as per the main docs directory) are stored.
 - a data directory where project specific data to inform input parameters or for calibration is stored.
+
+The repository contains an example project "Australian_HBV_model-BM" which includes the populations and parameters used in Ben Cowie's original model. 
 
 
 
