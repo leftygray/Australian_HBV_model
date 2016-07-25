@@ -72,7 +72,7 @@ load(projectFile)
 
 # Population sizes ------------------------------------------------------
 
-# First convert results population sizes into a massize data frame -------
+# First convert results population sizes into a massize data frame
 popSizes <- as.data.frame.table(bestResults$allPops)
 colnames(popSizes) <- c("age_group", "state", "time_step", "popsize") 
 popSizes$time_step <- as.numeric(popSizes$time_step)
@@ -100,8 +100,9 @@ popSizesAge <- popSizes %>%
 # Plot of population size in every group
 plotAgePops <- popSizesAge
 plotAgePops$age_group <- factor(plotAgePops$age_group)
+# rename levels for plotting
 levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
-                                   "Age 15 to 44", "Age > 45") # rename levels for plotting
+                                   "Age 15 to 44", "Age > 45") 
 
 agePopPlot <- ggplot(data = plotAgePops, 
                      aes(x = year, y = totalpop, group = age_group)) +
@@ -115,53 +116,16 @@ agePopPlot <- ggplot(data = plotAgePops,
 # Population prevalence --------------------------------------------------
 
 # Data frame for overall number of people infected by age 
-# Have produced a plot of this
-infectSizes <-  popSizes %>%
-  group_by(year, age_group) %>%
-  filter(state != "s") %>% # exclude susceptibles; Shouldn't "cleared"" and "immune" be excluded too?
-  summarise(infectpop = sum(popsize)) %>%
-  ungroup() %>%
-  arrange(age_group) %>%
-  mutate(popsize = popSizesAge$totalpop,
-    prevalence = infectpop / popSizesAge$totalpop)
-
-#overall incidence
-totalInfect <- infectSizes %>%
-  group_by(year) %>%
-  summarise(totalinfect = sum(infectpop)) 
-
-totalInfectPlot <- ggplot(data = totalInfect, aes(x = year, y = totalinfect)) +
-  geom_line(colour = "blue") +
-  xlab("Year") + ylab("Population size") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 20)) +
-  plotOpts
-
-# Plot of population size in every group
-plotInfectPops <- infectSizes
-plotInfectPops$age_group <- factor(infectSizes$age_group)
-levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
-                                   "Age 15 to 44", "Age > 45") # rename levels for plotting
-
-infectPopPlot <- ggplot(data = plotInfectPops, 
-                     aes(x = year, y = infectpop, group = age_group)) +
-  geom_line(colour = "blue") +
-  facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 50)) +
-  xlab("Year") + ylab("Population size") +
-  plotOpts + theme(panel.margin = unit(2, "lines"))
-
-# Prevalence overall population
 prevSizes <-  popSizes %>%
   group_by(year, age_group) %>%
-  filter(state != "s") %>% # exclude susceptibles
+  filter(state != c("s", "cl", "i")) %>% 
   summarise(infectpop = sum(popsize)) %>%
   ungroup() %>%
   arrange(age_group) %>%
   mutate(popsize = popSizesAge$totalpop,
     prevalence = infectpop / popSizesAge$totalpop)
 
+# Plot of total number of people infected
 totalPrev <- prevSizes %>%
   group_by(year) %>%
   summarise(totalprev = sum(prevalence)) 
@@ -173,14 +137,17 @@ totalPrevPlot <- ggplot(data = totalPrev, aes(x = year, y = totalprev)) +
                                   by = 20)) +
   plotOpts
 
-# Prevalence by age group
+# Plot of prevalence in every group
+
+# First sort out level names for plotting
 plotPrevPops <- prevSizes
 plotPrevPops$age_group <- factor(prevSizes$age_group)
-levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
-                                   "Age 15 to 44", "Age > 45") # rename levels for plotting
+levels(plotPrevPops$age_group) <- c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45") 
 
-prevPopPlot <- ggplot(data = plotPrevPops, 
-                     aes(x = year, y = prevalence, group = age_group)) +
+# Creat plot
+infectPopPlot <- ggplot(data = plotPrevPops, 
+                     aes(x = year, y = infectpop, group = age_group)) +
   geom_line(colour = "blue") +
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
@@ -189,6 +156,7 @@ prevPopPlot <- ggplot(data = plotPrevPops,
   plotOpts + theme(panel.margin = unit(2, "lines"))
 
 # Plot of population size in every group
+# Essentially prevalence by age and state
 plotPops <- popSizes
 plotPops$age_group <- factor(plotPops$age_group)
 levels(plotPops$age_group) <- c("Age < 4", "Age 5 to 14", "Age 15 to 44",
@@ -207,8 +175,22 @@ allPopsPlot <- ggplot(data = plotPops,
   plotOpts + theme(legend.position = "right") + 
   theme(panel.margin = unit(2, "lines"))
 
-# Neil's code ------------------------------------------------------------
-# Do we still need these below? I cleaned it up a bit
+
+
+
+# New infections and incidence -------------------------------------------
+totalInfect <- infectSizes %>%
+  group_by(year) %>%
+  summarise(totalinfect = sum(infectpop)) 
+
+totalInfectPlot <- ggplot(data = totalInfect, 
+                          aes(x = year, y = totalinfect)) +
+  geom_line(colour = "blue") +
+  xlab("Year") + ylab("Population size") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  plotOpts
+
 newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
   mutate(year = pg$pts) %>%
   select(year, everything()) %>%
@@ -239,7 +221,7 @@ incidencePlot <- ggplot(data = newInfections,
                                 "Age > 45")) +
   plotOpts + theme(legend.position = "right")
   
-#HBV treatments
+# Treatment --------------------------------------------------------------
 treatments <- as.data.frame(t(bestResults$newTreatments)) %>%
   mutate(year = pg$pts) %>%
   select(year, everything()) %>%
@@ -256,7 +238,7 @@ treatmentsPlot <- ggplot(data = treatments,
                                 "Age > 45")) +
   plotOpts + theme(legend.position = "right")
 
-#HBV deaths
+# HBV deaths -------------------------------------------------------------
 deaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
   mutate(year = pg$pts) %>%
   select(year, everything()) %>%
