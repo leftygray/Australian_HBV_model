@@ -24,8 +24,11 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   #
   # -----------------------------------------------------------------------
   
+  graphics.off() # Close current plot
+  
   basePath <- getwd()
   project_directory <- file.path(basePath, "projects")
+ 
   
   if (resource) {
     Rcode <- file.path(basePath, "code")
@@ -33,6 +36,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     # Load useful libraries
     source(file.path(Rcode, "LoadLibrary.R"))
     source(file.path(Rcode, "DataLibraries.R"))
+    source(file.path(Rcode, "PlotOptions.R"))
     
     # Source model files
     source(file.path(Rcode, "HBVmodel.R"))
@@ -114,8 +118,94 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   results <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
                           transitions)
   
-  # Create simple plot ----------------------------------------------------
+  # Create calibration plot ----------------------------------------------
  
+  # Plot in a separate figure
+  windows(width = 35, height=30, xpos = 200) # Dimesnions big enough to 
+                                             # maximize
+  # Total population size 
   
-   
+  popSizes <- as.data.frame.table(bestResults$allPops)
+  colnames(popSizes) <- c("age_group", "state", "time_step", "popsize") 
+  popSizes$time_step <- as.numeric(popSizes$time_step)
+  
+  popSizes <- popSizes %>% # add pts as well
+    mutate(year = pg$start_year + (time_step-1) * pg$timestep) 
+  
+  totalPop <- popSizes %>%
+    group_by(year) %>%
+    summarise(totalpop = sum(popsize)) 
+  
+  totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
+    geom_line(colour = "blue") +
+    xlab("Year") + ylab("Population size") +
+    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                    by = 20)) + plotOpts +
+    ggtitle("Total population size")
+  
+  # Population size by age group
+  popSizesAge <- popSizes %>%
+    group_by(year, age_group) %>%
+    summarise(totalpop = sum(popsize)) %>%
+    ungroup() %>%
+    arrange(age_group)
+
+  plotAgePops <- popSizesAge
+  plotAgePops$age_group <- factor(plotAgePops$age_group)
+  
+  # rename levels for plotting
+  levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
+                                     "Age 15 to 44", "Age > 45") 
+  
+  agePopPlot <- ggplot(data = plotAgePops, 
+                       aes(x = year, y = totalpop, group = age_group)) +
+    geom_line(aes(colour = age_group)) + 
+    scale_colour_brewer(name = "Age Group", palette = "Set1",
+                        labels = c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44",
+                                   "Age > 45")) +
+    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                    by = 50)) +
+    xlab("Year") + ylab("Population size") +
+    plotOpts + theme(legend.position = "right") + 
+    ggtitle("Age group population size")
+  
+  # New Infections
+  newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
+    mutate(year = pg$pts) %>%
+    select(year, everything()) %>%
+    gather("age_group", "infections", 2:(pg$npops+1)) %>%
+    mutate(incidence = infections / popSizesAge$totalpop)
+  
+  newInfectionsPlot <- ggplot(data = newInfections, 
+      aes(x = year, y = infections, group= age_group)) +
+    geom_line(aes(color = age_group)) + 
+    xlab("Year") + ylab("New infections") +
+    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                    by = 20)) +
+    scale_colour_brewer(name = "Age Group", palette = "Set1",
+                        labels = c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44",
+                                   "Age > 45")) + 
+    plotOpts + theme(legend.position = "right") +
+    ggtitle("New infections by age")
+    
+  incidencePlot <- ggplot(data = newInfections, 
+      aes(x = year, y = incidence * 1e5, group = age_group)) + 
+    geom_line(aes(color = age_group)) + 
+    xlab("Year") + ylab("Incidence per 100,000") +
+    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                    by = 20)) +
+    scale_colour_brewer(name = "Age Group", palette = "Set1",
+                        labels = c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44",
+                                   "Age > 45")) +
+    plotOpts + theme(legend.position = "right") +
+    ggtitle("Incidence by age")
+  
+    # Put all plots in a grid
+    print(plot_grid(totalPopPlot, agePopPlot, newInfectionsPlot, 
+                    incidencePlot, ncol = 3, nrow = 3))
+  
+  
 }
