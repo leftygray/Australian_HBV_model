@@ -89,7 +89,7 @@ popSizes <- popSizes %>% # add pts as well
 #            population = colSums(popSizes))
 
 totalPop <- popSizes %>%
-  group_by(time_step) %>%
+  group_by(year) %>%
   summarise(totalpop = sum(popsize)) 
 
 totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
@@ -131,8 +131,45 @@ agePopPlot <- ggplot(data = plotAgePops,
 # Population prevalence --------------------------------------------------
 
 # Data frame for overall number of people infected by age 
-# Haven't produced a plot of this
+# Have produced a plot of this
 infectSizes <-  popSizes %>%
+  group_by(year, age_group) %>%
+  filter(state != "s") %>% # exclude susceptibles; Shouldn't "cleared"" and "immune" be excluded too?
+  summarise(infectpop = sum(popsize)) %>%
+  ungroup() %>%
+  arrange(age_group) %>%
+  mutate(popsize = popSizesAge$totalpop,
+    prevalence = infectpop / popSizesAge$totalpop)
+
+#overall incidence
+totalInfect <- infectSizes %>%
+  group_by(year) %>%
+  summarise(totalinfect = sum(infectpop)) 
+
+totalInfectPlot <- ggplot(data = totalInfect, aes(x = year, y = totalinfect)) +
+  geom_line(colour = "blue") +
+  xlab("Year") + ylab("Population size") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  plotOpts
+
+# Plot of population size in every group
+plotInfectPops <- infectSizes
+plotInfectPops$age_group <- factor(infectSizes$age_group)
+levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45") # rename levels for plotting
+
+infectPopPlot <- ggplot(data = plotInfectPops, 
+                     aes(x = year, y = infectpop, group = age_group)) +
+  geom_line(colour = "blue") +
+  facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 50)) +
+  xlab("Year") + ylab("Population size") +
+  plotOpts + theme(panel.margin = unit(2, "lines"))
+
+# Prevalence overall population
+prevSizes <-  popSizes %>%
   group_by(year, age_group) %>%
   filter(state != "s") %>% # exclude susceptibles
   summarise(infectpop = sum(popsize)) %>%
@@ -141,9 +178,31 @@ infectSizes <-  popSizes %>%
   mutate(popsize = popSizesAge$totalpop,
     prevalence = infectpop / popSizesAge$totalpop)
 
-# Prevalence overall population
+totalPrev <- prevSizes %>%
+  group_by(year) %>%
+  summarise(totalprev = sum(prevalence)) 
+
+totalPrevPlot <- ggplot(data = totalPrev, aes(x = year, y = totalprev)) +
+  geom_line(colour = "blue") +
+  xlab("Year") + ylab("Population size") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  plotOpts
 
 # Prevalence by age group
+plotPrevPops <- prevSizes
+plotPrevPops$age_group <- factor(prevSizes$age_group)
+levels(plotAgePops$age_group) <- c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45") # rename levels for plotting
+
+prevPopPlot <- ggplot(data = plotPrevPops, 
+                     aes(x = year, y = prevalence, group = age_group)) +
+  geom_line(colour = "blue") +
+  facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 50)) +
+  xlab("Year") + ylab("Population size") +
+  plotOpts + theme(panel.margin = unit(2, "lines"))
 
 # Plot of population size in every group
 plotPops <- popSizes
@@ -165,157 +224,14 @@ allPopsPlot <- ggplot(data = plotPops,
   theme(panel.margin = unit(2, "lines"))
 
 # Neil's code ------------------------------------------------------------
-
-# allPops population per ge group
-# allPops0s <- NULL
-# allPops0s$n <- c(bestResults$allPops[1,"s",])
-# allPops0s$npts <- c(1:length(bestResults$allPops[1,"s",]))
-# allPops0s$state <- "susceptible"
-# allPops0s$pops <- "age0to4"
-# allPops0a <- NULL
-# allPops0a$n <- c(bestResults$allPops[1,"a",])
-# allPops0a$npts <- c(1:length(bestResults$allPops[1,"a",]))
-# allPops0a$state <- "acute"
-# allPops0a$pops <- "age0to4"
-# allPops0ch <- NULL
-# allPops0ch$n <- c(bestResults$allPops[1,"ch",])
-# allPops0ch$npts <- c(1:length(bestResults$allPops[1,"ch",]))
-# allPops0ch$state <- "chronic"
-# allPops0ch$pops <- "age0to4"
-# allPops0cl <- NULL
-# allPops0cl$n <- c(bestResults$allPops[1,"cl",])
-# allPops0cl$npts <- c(1:length(bestResults$allPops[1,"cl",]))
-# allPops0cl$state <- "cleared"  
-# allPops0cl$pops <- "age0to4"
-# allPops0i <- NULL
-# allPops0i$n <- c(bestResults$allPops[1,"i",])
-# allPops0i$npts <- c(1:length(bestResults$allPops[1,"i",]))
-# allPops0i$state <- "immune"
-# allPops0i$pops <- "age0to4"
-# 
-# #  allPops0 <- NULL
-# #  allPops0 <- rbind(as.data.frame(allPops0s), as.data.frame(allPops0a), as.data.frame(allPops0ch), as.data.frame(allPops0cl), as.data.frame(allPops0i))
-# #  ggplot(data=allPops0, aes(x= npts, y= n, group=state)) + geom_line(aes(color=state)) + xlab("year") + ylab("number of people") + ggtitle("Population") 
-# 
-# allPops1s <- NULL
-# allPops1s$n <- c(bestResults$allPops[2,"s",])
-# allPops1s$npts <- c(1:length(bestResults$allPops[2,"s",]))
-# allPops1s$state <- "susceptible"
-# allPops1s$pops <- "age5to14"
-# allPops1a <- NULL
-# allPops1a$n <- c(bestResults$allPops[2,"a",])
-# allPops1a$npts <- c(1:length(bestResults$allPops[2,"a",]))
-# allPops1a$state <- "acute"
-# allPops1a$pops <- "age5to14"
-# allPops1ch <- NULL
-# allPops1ch$n <- c(bestResults$allPops[2,"ch",])
-# allPops1ch$npts <- c(1:length(bestResults$allPops[2,"ch",]))
-# allPops1ch$state <- "chronic"
-# allPops1ch$pops <- "age5to14"
-# allPops1cl <- NULL
-# allPops1cl$n <- c(bestResults$allPops[2,"cl",])
-# allPops1cl$npts <- c(1:length(bestResults$allPops[2,"cl",]))
-# allPops1cl$state <- "cleared"
-# allPops1cl$pops <- "age5to14"
-# allPops1i <- NULL
-# allPops1i$n <- c(bestResults$allPops[2,"i",])
-# allPops1i$npts <- c(1:length(bestResults$allPops[2,"i",]))
-# allPops1i$state <- "immune"
-# allPops1i$pops <- "age5to14"
-# 
-# allPops2s <- NULL
-# allPops2s$n <- c(bestResults$allPops[3,"s",])
-# allPops2s$npts <- c(1:length(bestResults$allPops[3,"s",]))
-# allPops2s$state <- "susceptible"
-# allPops2s$pops <- "age15to44"
-# allPops2a <- NULL
-# allPops2a$n <- c(bestResults$allPops[3,"a",])
-# allPops2a$npts <- c(1:length(bestResults$allPops[3,"a",]))
-# allPops2a$state <- "acute"  
-# allPops2a$pops <- "age15to44"
-# allPops2ch <- NULL
-# allPops2ch$n <- c(bestResults$allPops[3,"ch",])
-# allPops2ch$npts <- c(1:length(bestResults$allPops[3,"ch",]))
-# allPops2ch$state <- "chronic"  
-# allPops2ch$pops <- "age15to44"
-# allPops2cl <- NULL
-# allPops2cl$n <- c(bestResults$allPops[3,"cl",])
-# allPops2cl$npts <- c(1:length(bestResults$allPops[3,"cl",]))
-# allPops2cl$state <- "cleared"  
-# allPops2cl$pops <- "age15to44"
-# allPops2i <- NULL
-# allPops2i$n <- c(bestResults$allPops[3,"i",])
-# allPops2i$npts <- c(1:length(bestResults$allPops[3,"i",]))
-# allPops2i$state <- "immune"  
-# allPops2i$pops <- "age15to44"
-# 
-# allPops3s <- NULL
-# allPops3s$n <- c(bestResults$allPops[4,"s",])
-# allPops3s$npts <- c(1:length(bestResults$allPops[4,"s",]))
-# allPops3s$state <- "susceptible"  
-# allPops3s$pops <- "age45"
-# allPops3a <- NULL
-# allPops3a$n <- c(bestResults$allPops[4,"a",])
-# allPops3a$npts <- c(1:length(bestResults$allPops[4,"a",]))
-# allPops3a$state <- "acute"  
-# allPops3a$pops <- "age45"
-# allPops3ch <- NULL
-# allPops3ch$n <- c(bestResults$allPops[4,"ch",])
-# allPops3ch$npts <- c(1:length(bestResults$allPops[4,"ch",]))
-# allPops3ch$state <- "chronic"  
-# allPops3ch$pops <- "age45"
-# allPops3cl <- NULL
-# allPops3cl$n <- c(bestResults$allPops[4,"cl",])
-# allPops3cl$npts <- c(1:length(bestResults$allPops[4,"cl",]))
-# allPops3cl$state <- "cleared"  
-# allPops3cl$pops <- "age45"
-# allPops3i <- NULL
-# allPops3i$n <- c(bestResults$allPops[4,"i",])
-# allPops3i$npts <- c(1:length(bestResults$allPops[4,"i",]))
-# allPops3i$state <- "immune"  
-# allPops3i$pops <- "age45"
-# 
-# allPops <- NULL
-# allPops <- rbind(as.data.frame(allPops0s), as.data.frame(allPops0a), as.data.frame(allPops0ch), as.data.frame(allPops0cl), as.data.frame(allPops0i), as.data.frame(allPops1s), as.data.frame(allPops1a), as.data.frame(allPops1ch), as.data.frame(allPops1cl), as.data.frame(allPops1i), as.data.frame(allPops2s), as.data.frame(allPops2a), as.data.frame(allPops2ch), as.data.frame(allPops2cl), as.data.frame(allPops2i), as.data.frame(allPops3s), as.data.frame(allPops3a), as.data.frame(allPops3ch), as.data.frame(allPops3cl), as.data.frame(allPops3i))
-# allPops <- ggplot(data=allPops, aes(x= npts, y= n, group=state)) + geom_line(aes(color=state)) + xlab("year") + ylab("number of people") + ggtitle("Population by age group") 
-# allPops + facet_wrap( ~ pops, ncol=2)
-# 
-# #total population --------------------------------------------------------
-# totalPops <- NULL
-# totalPops$n <- as.data.frame(allPops0s$n) + as.data.frame(allPops0a$n) + as.data.frame(allPops0ch$n) + as.data.frame(allPops0cl$n) + as.data.frame(allPops0i$n) + as.data.frame(allPops1s$n) + as.data.frame(allPops1a$n) + as.data.frame(allPops1ch$n) + as.data.frame(allPops1cl$n) + as.data.frame(allPops1i$n) + as.data.frame(allPops2s$n) + as.data.frame(allPops2a$n) + as.data.frame(allPops2ch$n) + as.data.frame(allPops2cl$n) + as.data.frame(allPops2i$n) + as.data.frame(allPops3s$n) + as.data.frame(allPops3a$n) + as.data.frame(allPops3ch$n) + as.data.frame(allPops3cl$n) + as.data.frame(allPops3i$n)
-# totalPops$npts <- c(1:length(allPops0s$n))
-# totalPops <- as.data.frame(totalPops)
-# colnames(totalPops) <- c("n", "npts")
-# ggplot(data=totalPops, aes(x= npts, y= n)) + geom_line() + xlab("year") + ylab("number of people") + ggtitle("Total Population") 
-
-
-#newInfections over time
-# newInfections0 <- NULL
-# newInfections0$n <- c(bestResults$newInfections[1,])
-# newInfections0$npts <- c(1:length(bestResults$newInfections[1,]))
-# newInfections0$pops <- "age0to4"
-# newInfections1 <- NULL
-# newInfections1$n <- c(bestResults$newInfections[2,])
-# newInfections1$npts <- c(1:length(bestResults$newInfections[2,]))
-# newInfections1$pops <- "age5to14"
-# newInfections2 <- NULL
-# newInfections2$n <- c(bestResults$newInfections[3,])  
-# newInfections2$npts <- c(1:length(bestResults$newInfections[3,]))
-# newInfections2$pops <- "age15to44"
-# newInfections3 <- NULL
-# newInfections3$n <- c(bestResults$newInfections[4,])    
-# newInfections3$npts <- c(1:length(bestResults$newInfections[4,]))
-# newInfections3$pops <- "age45"
-# 
-# newInfections <- NULL
-# newInfections <- rbind(as.data.frame(newInfections0), as.data.frame(newInfections1), as.data.frame(newInfections2), as.data.frame(newInfections3))
-
+# Do we still need these below? I cleaned it up a bit
 newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
   mutate(year = pg$pts) %>%
   select(year, everything()) %>%
   gather("age_group", "infections", 2:(pg$npops+1)) %>%
   mutate(incidence = infections / popSizesAge$totalpop)
 
+# newInfectionsPlot
 newInfectionsPlot <- ggplot(data = newInfections, 
     aes(x = year, y = infections, group= age_group)) +
   geom_line(aes(color = age_group)) + 
@@ -327,29 +243,7 @@ newInfectionsPlot <- ggplot(data = newInfections,
                                 "Age > 45")) + 
   plotOpts + theme(legend.position = "right")
 
-# newInfectionsPlot
-
-#incidence over time (newInfections / totalPops per time) ----------------
-# incidence0 <- NULL
-# incidence0$n <- c(bestResults$newInfections[1,]/totalPops$n)
-# incidence0$npts <- c(1:length(bestResults$newInfections[1,]))
-# incidence0$pops <- "age0to4"
-# incidence1 <- NULL
-# incidence1$n <- c(bestResults$newInfections[2,]/totalPops$n)
-# incidence1$npts <- c(1:length(bestResults$newInfections[2,]))
-# incidence1$pops <- "age5to14"
-# incidence2 <- NULL
-# incidence2$n <- c(bestResults$newInfections[3,]/totalPops$n)  
-# incidence2$npts <- c(1:length(bestResults$newInfections[3,]))
-# incidence2$pops <- "age15to44"
-# incidence3 <- NULL
-# incidence3$n <- c(bestResults$newInfections[4,]/totalPops$n)    
-# incidence3$npts <- c(1:length(bestResults$newInfections[4,]))
-# incidence3$pops <- "age45"
-# 
-# incidence <- NULL
-# incidence <- rbind(as.data.frame(incidence0), as.data.frame(incidence1), as.data.frame(incidence2), as.data.frame(incidence3))
-
+#Incidence plot
 incidencePlot <- ggplot(data = newInfections, 
   aes(x = year, y = incidence * 1e5, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
@@ -361,103 +255,40 @@ incidencePlot <- ggplot(data = newInfections,
                                 "Age > 45")) +
   plotOpts + theme(legend.position = "right")
   
-# incidencePlot
+#HBV treatments
+treatments <- as.data.frame(t(bestResults$newTreatments)) %>%
+  mutate(year = pg$pts) %>%
+  select(year, everything()) %>%
+  gather("age_group", "treatments", 2:(pg$npops+1)) 
 
-#####
+treatmentsPlot <- ggplot(data = treatments, 
+  aes(x = year, y = treatments, group = age_group)) + 
+  geom_line(aes(color = age_group)) + 
+  xlab("year") + ylab("Treatments") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  scale_colour_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
+                                "Age > 45")) +
+  plotOpts + theme(legend.position = "right")
 
-#prevalence per age group
-# prevalentCases0 <- NULL
-# prevalentCases0$n <- c(0 + cumsum(newInfections0$n))
-# prevalentCases0$npts <- c(1:length(newInfections0$n))
-# prevalentCases0$pops <- "age0to4"
-# prevalentCases1 <- NULL
-# prevalentCases1$n <- c(0 + cumsum(newInfections1$n))
-# prevalentCases1$npts <- c(1:length(newInfections0$n))
-# prevalentCases1$pops <- "age5to14"
-# prevalentCases2 <- NULL
-# prevalentCases2$n <- c(0 + cumsum(newInfections2$n))  
-# prevalentCases2$npts <- c(1:length(newInfections0$n))
-# prevalentCases2$pops <- "age15to44"
-# prevalentCases3 <- NULL
-# prevalentCases3$n <- c(0 + cumsum(newInfections3$n))    
-# prevalentCases3$npts <- c(1:length(newInfections0$n))
-# prevalentCases3$pops <- "age45"
-# 
-# prevalentCases <- NULL
-# prevalentCases <- rbind(as.data.frame(prevalentCases0), as.data.frame(prevalentCases1), as.data.frame(prevalentCases2), as.data.frame(prevalentCases3))
-# prevalentCasesPlot <- ggplot(data=prevalentCases, aes(x= npts, y= n, group=pops)) + geom_line(aes(color=pops)) + xlab("year") + ylab("number of people") + ggtitle("Prevalent HBV infections") 
-# # prevalentCasesPlot
+#HBV deaths
+deaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
+  mutate(year = pg$pts) %>%
+  select(year, everything()) %>%
+  gather("age_group", "treatments", 2:(pg$npops+1)) 
 
-#total prevalence over time
-# prevalence0 <- NULL
-# prevalence0$n <- c(prevalentCases0$n/totalPops$n)
-# prevalence0$npts <- c(1:length(prevalentCases0$n))
-# prevalence0$pops <- "age0to4"
-# prevalence1 <- NULL
-# prevalence1$n <- c(prevalentCases0$n/totalPops$n)
-# prevalence1$npts <- c(1:length(prevalentCases0$n))
-# prevalence1$pops <- "age5to14"
-# prevalence2 <- NULL
-# prevalence2$n <- c(prevalentCases0$n/totalPops$n)  
-# prevalence2$npts <- c(1:length(prevalentCases0$n))
-# prevalence2$pops <- "age15to44"
-# prevalence3 <- NULL
-# prevalence3$n <- c(prevalentCases0$n/totalPops$n)    
-# prevalence3$npts <- c(1:length(prevalentCases0$n))
-# prevalence3$pops <- "age45"
-# 
-# prevalence <- NULL
-# prevalence <- rbind(as.data.frame(prevalence0), as.data.frame(prevalence1), as.data.frame(prevalence2), as.data.frame(prevalence3))
-# prevalencePlot <- ggplot(data=incidence, aes(x= npts, y= n, group=pops)) + geom_line(aes(color=pops)) + xlab("year") + ylab("number of people") + ggtitle("HBV prevalence") 
-# # prevalencePlot
-# 
-# #HBV treatment 
-# HBVtreatments0 <- NULL
-# HBVtreatments0$n <- c(bestResults$newTreatments[1,])
-# HBVtreatments0$npts <- c(1:length(bestResults$newTreatments[1,]))
-# HBVtreatments0$pops <- "age0to4"
-# HBVtreatments1 <- NULL
-# HBVtreatments1$n <- c(bestResults$newTreatments[2,])
-# HBVtreatments1$npts <- c(1:length(bestResults$newTreatments[2,]))
-# HBVtreatments1$pops <- "age5to14"
-# HBVtreatments2 <- NULL
-# HBVtreatments2$n <- c(bestResults$newTreatments[3,])  
-# HBVtreatments2$npts <- c(1:length(bestResults$newTreatments[3,]))
-# HBVtreatments2$pops <- "age15to44"
-# HBVtreatments3 <- NULL
-# HBVtreatments3$n <- c(bestResults$newTreatments[4,])    
-# HBVtreatments3$npts <- c(1:length(bestResults$newTreatments[4,]))
-# HBVtreatments3$pops <- "age45"
-# 
-# HBVtreatments <- NULL
-# HBVtreatments <- rbind(as.data.frame(HBVtreatments0), as.data.frame(HBVtreatments1), as.data.frame(HBVtreatments2), as.data.frame(HBVtreatments3))
-# HBVtreatmentsPlot <- ggplot(data=HBVtreatments, aes(x= npts, y= n, group=pops)) + geom_line(aes(color=pops)) + xlab("year") + ylab("number of people") + ggtitle("Treated HBV cases") 
-# # HBVtreatmentsPlot
-# 
-# #HBV deaths
-HBVdeaths0 <- data.frame(n = c(bestResults$newHBVdeaths[1,]),
-                         npts = pg$pts,
-                         pops = "age0to4")
-# HBVdeaths0$n <- c(bestResults$newHBVdeaths[1,])
-# HBVdeaths0$npts <- c(1:length(bestResults$newHBVdeaths[1,]))
-# HBVdeaths0$pops <- "age0to4"
-# HBVdeaths1 <- NULL
-# HBVdeaths1$n <- c(bestResults$newHBVdeaths[2,])
-# HBVdeaths1$npts <- c(1:length(bestResults$newHBVdeaths[2,]))
-# HBVdeaths1$pops <- "age5to14"
-# HBVdeaths2 <- NULL
-# HBVdeaths2$n <- c(bestResults$newHBVdeaths[3,])  
-# HBVdeaths2$npts <- c(1:length(bestResults$newHBVdeaths[3,]))
-# HBVdeaths2$pops <- "age15to44"
-# HBVdeaths3 <- NULL
-# HBVdeaths3$n <- c(bestResults$newHBVdeaths[4,])    
-# HBVdeaths3$npts <- c(1:length(bestResults$newHBVdeaths[4,]))
-# HBVdeaths3$pops <- "age45"
-# 
-# HBVdeaths <- NULL
-# HBVdeaths <- rbind(as.data.frame(HBVdeaths0), as.data.frame(HBVdeaths1), as.data.frame(HBVdeaths2), as.data.frame(HBVdeaths3))
-# HBVdeathsPlot <- ggplot(data=HBVdeaths, aes(x= npts, y= n, group=pops)) + geom_line(aes(color=pops)) + xlab("year") + ylab("number of people") + ggtitle("HBV deaths") 
-# HBVdeathsPlot
+deathsPlot <- ggplot(data = deaths, 
+  aes(x = year, y = treatments, group = age_group)) + 
+  geom_line(aes(color = age_group)) + 
+  xlab("year") + ylab("Deaths") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  scale_colour_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
+                                "Age > 45")) +
+  plotOpts + theme(legend.position = "right")
+
 
 # Display plots (if required) --------------------------------------------
 
