@@ -9,7 +9,7 @@
 # complete to save the parmeters into the project.
 # 
 # Calibration process.....
-
+#
 # Authors: Richard T. Gray, Neil Bretana
 
 CalibrateHIVmodel <- function(project, resource = FALSE) {
@@ -73,10 +73,10 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   constantsSpread <- as.data.frame(t(constantsSpread[,-1]))
   colnames(constantsSpread) <- parameters
   rownames(constantsSpread) <- NULL
-  
-  # Following gives a warning but I think it is okay (maybe need
-  # to convert constantsSpread into a repeated dataframe)
-  bestEstimateYears <- cbind(timeVarying, constantsSpread[1, ])
+
+  # Append to time varyingCC
+  constantsDf <- constantsSpread[rep(1,nrow(timeVarying)),]
+  bestEstimateYears <- cbind(timeVarying, constantsDf)
   
   # Expand to all points by linear extrapolation bewteen years
   best_estimates <- as.data.frame(matrix(0, ncol = ncol(bestEstimateYears),
@@ -115,5 +115,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                           transitions)
   
   # Create simple plot ----------------------------------------------------
+ 
   
+   
 }
