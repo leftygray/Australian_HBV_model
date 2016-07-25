@@ -116,36 +116,44 @@ agePopPlot <- ggplot(data = plotAgePops,
 # Population prevalence --------------------------------------------------
 
 # Data frame for overall number of people infected by age 
-prevSizes <-  popSizes %>%
+numInfected <-  popSizes %>%
   group_by(year, age_group) %>%
   filter(state != c("s", "cl", "i")) %>% 
-  summarise(infectpop = sum(popsize)) %>%
+  summarise(numinfected = sum(popsize)) %>%
   ungroup() %>%
   arrange(age_group) %>%
   mutate(popsize = popSizesAge$totalpop,
     prevalence = infectpop / popSizesAge$totalpop)
 
-# Plot of total number of people infected
-totalPrev <- prevSizes %>%
+# Plot of total number of people infected and overall prevalence
+totalPrev <- numInfected %>%
   group_by(year) %>%
-  summarise(totalprev = sum(prevalence)) 
-
-totalPrevPlot <- ggplot(data = totalPrev, aes(x = year, y = totalprev)) +
+  summarise(total_infected = sum(numInfected)) %>%
+  mutate(overall_prev = total_infected / totalPop$totalpop)
+             
+totalInfectedPlot <- ggplot(data = totalPrev, 
+                        aes(x = year, y = total_infected)) +
   geom_line(colour = "blue") +
-  xlab("Year") + ylab("Population size") +
+  xlab("Year") + ylab("Total number infected") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
                                   by = 20)) +
   plotOpts
 
-# Plot of prevalence in every group
+totalPrevPlot <- ggplot(data = totalPrev, 
+                        aes(x = year, y = overall_prev)) +
+  geom_line(colour = "blue") +
+  xlab("Year") + ylab("Overall prevalence") +
+  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
+                                  by = 20)) +
+  plotOpts
 
-# First sort out level names for plotting
+# Plot of prevalence in every group - first sort out level names for
+# plotting
 plotPrevPops <- prevSizes
 plotPrevPops$age_group <- factor(prevSizes$age_group)
 levels(plotPrevPops$age_group) <- c("Age < 4", "Age 5 to 14", 
                                    "Age 15 to 44", "Age > 45") 
 
-# Creat plot
 infectPopPlot <- ggplot(data = plotPrevPops, 
                      aes(x = year, y = infectpop, group = age_group)) +
   geom_line(colour = "blue") +
