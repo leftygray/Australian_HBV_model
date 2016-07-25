@@ -80,16 +80,8 @@ popSizes$time_step <- as.numeric(popSizes$time_step)
 popSizes <- popSizes %>% # add pts as well
   mutate(year = pg$start_year + (time_step-1) * pg$timestep) 
 
-# Total population size 
-# Alternative using apply
-# popSizes <- apply(bestResults$allPops, 3, function(x) rowSums(x))
-
-
-# totalPop <- data_frame(time = pg$pts,
-#            population = colSums(popSizes))
-
 totalPop <- popSizes %>%
-  group_by(time_step) %>%
+  group_by(year) %>%
   summarise(totalpop = sum(popsize)) 
 
 totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
@@ -98,14 +90,6 @@ totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
                                   by = 20)) +
   plotOpts
-
-# Population size per age
-# popSizesAge <- as.data.frame(t(popSizes))
-# popSizesAge$time <- pg$pts
-# 
-# popSizesAge <- popSizesAge %>%
-#   select(time, everything()) %>%
-#   gather("age_group", "population", 2:(pg$npops+1))
 
 popSizesAge <- popSizes %>%
   group_by(year, age_group) %>%
@@ -353,7 +337,7 @@ newInfectionsPlot <- ggplot(data = newInfections,
 incidencePlot <- ggplot(data = newInfections, 
   aes(x = year, y = incidence * 1e5, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
-  xlab("year") + ylab("Incidence per 100,000") +
+  xlab("Year") + ylab("Incidence per 100,000") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
                                   by = 20)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
