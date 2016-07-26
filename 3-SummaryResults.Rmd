@@ -56,7 +56,7 @@ project <- "Australia_HBV_estimates-BM"
 
 # Plotting options
 displayPlots <- TRUE
-savePlots <- TRUE
+savePlots <- FALSE
 
 startYear <- 2000
 endYear <- 2030
@@ -69,6 +69,71 @@ endYear <- 2030
 
 projectFile <- file.path(projectFolder, project, paste0(project, ".rda"))
 load(projectFile)
+```
+
+```{r Plotting functions}
+
+# First create some functions to help produce annual estimates
+midyearIndex <- function(n, timestep) {
+  # This function extracts the mid year index. This used for 
+  # calculating per population number annual outputs by dividing
+  # annual value by mid year population size
+  # 
+  # Args:
+  #   n: length of vector to extract midyear points
+  #   timestep: modelling timestep used
+  # Returns:
+  #   indices associated with the mid year value
+  #   
+  #-----------------------------------------------------------------------
+  
+  seq(1, n, 1/timestep) + round(1/timestep/2)
+}
+
+sumYear <- function(vector, timestep) {
+  # This function is used to sum every 1/timestep values of a vector. 
+  # Primarily used to calculate annual indicators
+  # 
+  # Args:
+  #   vector: vector to sum
+  #   timestep: modelling timestep used
+  # Returns:
+  #   Vector of sums
+  # 
+  #-----------------------------------------------------------------------
+  
+  return(unname(tapply(vector, (seq_along(vector)-1) %/% (1/timestep),
+                       sum)))
+}
+
+yearDf <- function(df, sumVar, midVar, pg, divideVar = NULL) {
+  # This function applys sumYear and midyear Index to a data frame of 
+  # modelling results. Primarily used to produce a data frame with annual 
+  # indicators rather than for each time step. 
+  # 
+  # Args:
+  #   df:
+  #   sumVar: String naming variable to calculate yearly summs
+  #   midVar: String naming variable to extract mid year estimates from
+  #   pg: project specifications
+  #   divideVar: String naming variable given by sumVar / midVar. Default
+  #     is NULL as it is optional
+  # Returns:
+  #   Dataframe with annual/yearly estimates
+  # 
+  # ----------------------------------------------------------------------
+  
+  yearFrame <- df[seq(1, nrow(df), 1 / pg$timestep), ]
+  yearFrame[, sumVar] <- sumYear(df[, sumVar], pg$timestep)
+  yearFrame$year <- rep(head(pg$years, -1), pg$npops)
+  yearFrame[, midVar] <- df[, midVar][midyearIndex(nrow(df))]
+  if (!is.null(divideVar)) {
+    yearFrame[, divideVar] <- yearFrame[, sumVar] / 
+      yearFrame[, midVar]
+  }
+  return(yearFrame)
+}
+
 ```
 
 ```{r Generate plots}
@@ -212,6 +277,12 @@ newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
   mutate(incidence = infections / popSizesAge$totalpop,
          total_pop = popSizesAge$totalpop)
 
+
+
+
+annNewInfections <- yearDf(newInfections, "infections", "total_pop", pg,
+                           divideVar = "incidence")
+
 # Total new infections
 totalInfections <- newInfections %>%
   group_by(year) %>%
@@ -238,7 +309,7 @@ totalIncidencePlot <- ggplot(data = totalInfections,
   plotOpts
 
 # By age group
-popNewInfectionsPlot <- ggplot(data = newInfections, 
+popNewInfectionsPlot <- ggplot(data = annNewInfections, 
     aes(x = year, y = infections, group= age_group)) +
   geom_line(aes(color = age_group)) + 
   xlab("Year") + ylab("New infections") +
@@ -487,6 +558,10 @@ totalDeathsPlot
 
 ```{r Insert figure 15, include = TRUE}
 popDeathsPlot
+
+
+
+
 ```
 
 ### Vaccination

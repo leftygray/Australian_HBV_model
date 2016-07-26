@@ -38,6 +38,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     source(file.path(Rcode, "LoadLibrary.R"))
     source(file.path(Rcode, "DataLibraries.R"))
     source(file.path(Rcode, "PlotOptions.R"))
+    LoadLibrary(cowplot) # Note masks ggsave
     
     # Source model files
     source(file.path(Rcode, "HBVmodel.R"))
@@ -45,7 +46,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   
   # Load current project specs and inputs ---------------------------------
   projectFolder <- file.path(project_directory, project)
-  load(file.path(projectFolder, paste0(project_name, ".rda")))
+  load(file.path(projectFolder, paste0(project, ".rda")))
   
   # Read in input files (which have been updated by the user) -------------
   initialPops <- read_csv(file.path(projectFolder, 
@@ -150,7 +151,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     ungroup() %>%
     arrange(age_group)
   
-  agePopPlot <- ggplot(data = plotAgePops, 
+  agePopPlot <- ggplot(data = popSizesAge, 
                        aes(x = year, y = totalpop, group = age_group)) +
     geom_line(aes(colour = age_group)) + 
     scale_colour_brewer(name = "Age Group", palette = "Set1") +
@@ -184,7 +185,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     plotOpts + 
     ggtitle("Overall prevalence")
   
-  popPrevPlot <- ggplot(data = plotPrevPops, 
+  popPrevPlot <- ggplot(data = numInfected, 
       aes(x = year, y = 100 * prevalence, group = age_group)) +
     geom_line(aes(colour = age_group)) +
     scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
@@ -296,7 +297,6 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     xlab("year") + ylab("Number of deaths") +
     scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
                                     by = 20)) +
-    coord_cartesian(xlim = c(startYear, endYear)) +
     scale_colour_brewer(name = "Age Group", palette = "Set1") +
     plotOpts + theme(legend.position = "right") + 
     ggtitle("HBV deaths by population")
