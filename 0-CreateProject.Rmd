@@ -26,7 +26,7 @@ The following chunk is where the user enters the project specifications
 ```{r Project specifications}
 # Hard coded user specified project details
 
-project_name <- "Australia_HBV_estimates-BM-2"
+project_name <- "test_project"
 project_directory <- file.path(basePath, "projects")
 
 # Start of the first year
@@ -186,18 +186,18 @@ timeFactors$parameter <- colnames(timeVarying)
 write_csv(timeFactors, file.path(projectFolder,
                                "time_varying_ranges.csv"))
 
-# Create associated transitions and wiafw_matrix files -------------------
+# Create associated transitions and waifw_matrix files -------------------
 transitions <- as.data.frame(matrix(0, nrow = npops, ncol = npops + 1))
 colnames(transitions) <- c("population", population_names)
 transitions$population <- population_names
 
-wiafw_matrix <- transitions
+waifw_matrix <- transitions
 
 write_csv(transitions, file.path(projectFolder,
                                "population_transitions.csv"))
 
-write_csv(wiafw_matrix, file.path(projectFolder,
-                               "population_wiafw_matrix.csv"))
+write_csv(waifw_matrix, file.path(projectFolder,
+                               "population_waifw_matrix.csv"))
 
 ```
 
@@ -229,7 +229,7 @@ pg$nstates <- length(state_names)
 inputs <- list(initial_pops = initialPops, constants = constants,
                time_varying = timeVarying,
                time_varying_ranges = timeFactors,
-               transitions = transitions, wiafw_matrix = wiafw_matrix)
+               transitions = transitions, waifw_matrix = waifw_matrix)
 
 # Create project .rda files
 save(pg, inputs, file = file.path(projectFolder,

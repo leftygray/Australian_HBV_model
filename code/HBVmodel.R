@@ -7,7 +7,7 @@
 # Authors: Richard T. Gray, Neil Bretana
 
 HBVmodel <- function(pg, pm, initialPop, pts, transitions, 
-                     interactions = NULL) {
+                     waifw_matrix) {
   # Function to simulate the HBV model equations 
   # 
   # Args:
@@ -20,8 +20,9 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   #   transitions: A named matrix showing the rates people move from 
   #     one population to another. The rows show the population people move
   #     from and the columns show the population people move to.
-  #   interactions: A named matrix showing which populations have 
-  #     at-risk interactions
+  #   waifw_matrix: A named matrix showing the FOI per infectious 
+  #     unit by population. The rows show the population being infected
+  #     and the columns show the population transmitting.
   #   pts: The simulation time points in years 
   # Returns: 
   #   A list containing the following outputs:
@@ -46,8 +47,7 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   #   Fix up FOI equations/calculations
   #   Still some hard coded numbers which should be moved into parameters
   #   
-  # -----------------------------------------------------------------------
-  
+ 
   # Extract useful inputs -------------------------------------------------
   
   dt <- pg$timestep
@@ -214,30 +214,23 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     newPop <- allPops[, , time]
     
     # Force of infection calculations -------------------------------------
-    # TODO: add FOI equations and parameters to model
     # Note the units of acute beta are FoI per infectious unit per year so 
     # we don't need to divide by the total population. 
-    
-    acuteBeta <- matrix(c(2.77966E-10, 2.77966E-10, 2.77966E-10, 
-                          2.77966E-10, 2.77966E-10, 2.77966E-10, 
-                          2.77966E-10, 2.77966E-10, 3.70621E-09, 
-                          3.70621E-09, 3.70621E-09, 3.70621E-09,
-                          9.26553E-10, 9.26553E-10, 9.26553E-10, 
-                          9.26553E-10), nrow = 4, ncol = 4)
-    
-    chronicBeta <- 0.16
+     
+    acuteBeta <- t(as.matrix(waifw_matrix[2:(npops+1)]))
     
     forceInfection <- matrix(0, ncol = 1, nrow = npops)
     forceInfection[1, ] <- pm$fol_mult[time] * sum(acuteBeta[, 1] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
+      (oldPop[, "a"] + pm$chronic_beta[time] * oldPop[, "ch"])) 
     
     forceInfection[2, ] <- pm$fol_mult[time] * sum(acuteBeta[, 2] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
+      (oldPop[, "a"] + pm$chronic_beta[time] * oldPop[, "ch"])) 
     
     forceInfection[3, ] <- pm$fol_mult[time] * sum(acuteBeta[, 3] * 
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
+      (oldPop[, "a"] + pm$chronic_beta[time] * oldPop[, "ch"])) 
+    
     forceInfection[4, ] <- pm$fol_mult[time] * sum(acuteBeta[, 4] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
+      (oldPop[, "a"] + pm$chronic_beta[time] * oldPop[, "ch"])) 
     
     forceInfection <- forceInfection * dt # Convert annual to timestep
     

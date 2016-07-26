@@ -59,7 +59,7 @@ tic <- proc.time()
 
 # Run model on best estimates
 bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
-                        transitions)
+                        transitions, waifw_matrix)
 
 # Run sampled parameter sets
 # if (runSamples) {

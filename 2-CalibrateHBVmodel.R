@@ -61,15 +61,15 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     "time_varying_ranges.csv"))
   transitions <- read_csv(file.path(projectFolder,
                                     "population_transitions.csv"))
-  interactions <- read_csv(file.path(projectFolder,
-                                     "population_interactions.csv"))
+  waifw_matrix <- read_csv(file.path(projectFolder,
+                                     "population_waifw_matrix.csv"))
   
-  # Convert transistions and interactions into matrices
+  # Convert transistions and waifw_matrix into matrices
   transitions <- as.matrix(transitions[, 2:(pg$npops + 1)])
   rownames(transitions) <- colnames(transitions)
   
-  interactions <- as.matrix(interactions[, 2:(pg$npops + 1)])
-  rownames(interactions) <- colnames(interactions)
+  waifw_matrix <- as.matrix(waifw_matrix[, 2:(pg$npops + 1)])
+  rownames(waifw_matrix) <- colnames(waifw_matrix)
   
   # Update best estimate parameter set ------------------------------------
   bestEstimateYears <- timeVarying
@@ -120,7 +120,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   
   # Run model on updated best estimates -----------------------------------
   results <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
-                          transitions)
+                          transitions, waifw_matrix)
   
   # Create calibration plot ----------------------------------------------
  

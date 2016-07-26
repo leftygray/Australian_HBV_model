@@ -77,21 +77,21 @@ timeFactors <- read_csv(file.path(projectFolder,
                                  "time_varying_ranges.csv"))
 transitions <- read_csv(file.path(projectFolder,
                                "population_transitions.csv"))
-interactions <- read_csv(file.path(projectFolder,
-                                "population_interactions.csv"))
+waifw_matrix <- read_csv(file.path(projectFolder,
+                                "population_waifw_matrix.csv"))
 
-# Convert transistions and interactions into matrices
+# Convert transistions and waifw_matrix into matrices
 transitions <- as.matrix(transitions[, 2:(pg$npops + 1)])
 rownames(transitions) <- colnames(transitions)
 
-interactions <- as.matrix(interactions[, 2:(pg$npops + 1)])
-rownames(interactions) <- colnames(interactions)
+waifw_matrix <- as.matrix(waifw_matrix[, 2:(pg$npops + 1)])
+rownames(waifw_matrix) <- colnames(waifw_matrix)
 
 # Update inputs list
 inputs <- list(initial_pops = initialPops, 
                constants = constants, time_varying = timeVarying,
                time_varying_ranges = timeFactors,
-               transitions = transitions, interactions = interactions)
+               transitions = transitions, waifw_matrix = waifw_matrix)
 
 ```
   
@@ -129,7 +129,9 @@ constantsSpread <- as.data.frame(t(constantsSpread[,-1]))
 colnames(constantsSpread) <- parameters
 rownames(constantsSpread) <- NULL
 
-bestEstimateYears <- cbind(timeVarying, constantsSpread[1, ])
+# Append to time varyingCC
+constantsDf <- constantsSpread[rep(1,nrow(timeVarying)),]
+bestEstimateYears <- cbind(timeVarying, constantsDf)
 
 # Expand to all points by linear extrapolation bewteen years
 best_estimates <- as.data.frame(matrix(0, ncol = ncol(bestEstimateYears), 
@@ -185,8 +187,8 @@ for (set in 1:number_samples) {
   # Loop through constants and sample
   for (var in colnames(constantsSpread)) {
     tempSample <- randomParams(var, constants)
-    tempParam <- tempSample * constantsSpread[, var]
-    paramSetYear[, var] <- tempParam
+    # tempParam <- tempSample * constantsSpread[, var]
+    paramSetYear[, var] <- tempSample
   }
   
   # Expand to all points by linear extrapolation bewteen years
@@ -239,7 +241,7 @@ The final chunk updates the project file for running in the model.
 # Re-save projects file with updated specs, inputs and append best
 # estimates and parameter sets
 save(pg, inputs, best_estimates, param_sets, best_initial_pop,
-     param_initial_pops, transitions = transitions, 
+     param_initial_pops, transitions, waifw_matrix,
      file = file.path(projectFolder,
                       paste0(project_name, ".rda")))
 ```
