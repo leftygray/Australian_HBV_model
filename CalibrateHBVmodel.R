@@ -22,8 +22,8 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   #     Should only need to do this once.
   # Returns: 
   #   Generates a plot for visual inspection.
-  #
-  # -----------------------------------------------------------------------
+  # 
+  # Initilization --------------------------------------------------------
   
   graphics.off() # Close current plot
   
@@ -38,13 +38,14 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     source(file.path(Rcode, "LoadLibrary.R"))
     source(file.path(Rcode, "DataLibraries.R"))
     source(file.path(Rcode, "PlotOptions.R"))
+    source(file.path(Rcode, "PlotFunctions.R"))
     LoadLibrary(cowplot) # Note masks ggsave
     
     # Source model files
     source(file.path(Rcode, "HBVmodel.R"))
   } 
   
-  # Load current project specs and inputs ---------------------------------
+  #Load current project specs and inputs ---------------------------------
   projectFolder <- file.path(project_directory, project)
   load(file.path(projectFolder, paste0(project, ".rda")))
   
@@ -203,13 +204,21 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     mutate(incidence = infections / popSizesAge$totalpop,
            total_pop = popSizesAge$totalpop)
   
+  annNewInfections <- yearDf(newInfections, "infections", pg$years,
+                             pg$npops, pg$timestep, midVar = "total_pop",
+                             divideVar = "incidence")
+  
   totalInfections <- newInfections %>%
     group_by(year) %>%
     summarise(new_infects = sum(infections),
               total_pop = sum(total_pop)) %>%
     mutate(incidence = new_infects / total_pop) 
   
-  totalNewInfectionsPlot <- ggplot(data = totalInfections, 
+  annTotalInfections <- yearDf(totalInfections, "new_infects", pg$years,
+                               1, pg$timestep, midVar = "total_pop",
+                               divideVar = "incidence")
+  
+  totalNewInfectionsPlot <- ggplot(data = annTotalInfections, 
                                    aes(x = year, y = new_infects)) +
     geom_line(colour = "blue") +
     xlab("Year") + ylab("New Infections") +
@@ -217,7 +226,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     by = 20)) +
     plotOpts + ggtitle("Total new infections")
   
-  totalIncidencePlot <- ggplot(data = totalInfections, 
+  totalIncidencePlot <- ggplot(data = annTotalInfections, 
                                aes(x = year, y = incidence * 1e5)) +
     geom_line(colour = "blue") +
     xlab("Year") + ylab("Incidence per 100,000") +
@@ -225,7 +234,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     by = 20)) +
     plotOpts + ggtitle("Overall incidence")
   
-  popNewInfectionsPlot <- ggplot(data = newInfections, 
+  popNewInfectionsPlot <- ggplot(data = annNewInfections, 
                         aes(x = year, y = infections, group= age_group)) +
     geom_line(aes(color = age_group)) + 
     xlab("Year") + ylab("New infections") +
@@ -235,7 +244,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     plotOpts + theme(legend.position = "right") +
     ggtitle("New infections by population")
   
-  popIncidencePlot <- ggplot(data = newInfections, 
+  popIncidencePlot <- ggplot(data = annNewInfections, 
       aes(x = year, y = incidence * 1e5, group = age_group)) + 
     geom_line(aes(color = age_group)) + 
     xlab("Year") + ylab("Incidence per 100,000") +
@@ -251,11 +260,17 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     select(year, everything()) %>%
     gather("age_group", "treatments", 2:(pg$npops+1)) 
   
+  annPopTreatments <- yearDf(popTreatments, "treatments", pg$years,
+                             pg$npops, pg$timestep)
+  
   totalTreatments <- popTreatments %>%
     group_by(year) %>%
     summarise(treatments = sum(treatments))
   
-  totalTreatmentPlot <- ggplot(data = totalTreatments, 
+  annTotalTreatments <- yearDf(totalTreatments, "treatments", pg$years,
+                               1, pg$timestep)
+  
+  totalTreatmentPlot <- ggplot(data = annTotalTreatments, 
                                aes(x = year, y = treatments)) +
     geom_line(colour = "blue") +
     xlab("Year") + ylab("Number initiated treatment") +
@@ -263,7 +278,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     by = 20)) +
     plotOpts + ggtitle("Overall new treatments")
   
-  popTreatmentPlot <- ggplot(data = popTreatments, 
+  popTreatmentPlot <- ggplot(data = annPopTreatments, 
       aes(x = year, y = treatments, group = age_group)) + 
     geom_line(aes(color = age_group)) + 
     xlab("year") + ylab("Number initiated treatment") +
@@ -274,14 +289,20 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
     ggtitle("New treatments by population")
   
   # Deaths
-  deaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
+  popDeaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
     mutate(year = pg$pts) %>%
     select(year, everything()) %>%
     gather("age_group", "deaths", 2:(pg$npops+1)) 
   
-  totalDeaths <- deaths %>%
+  annPopDeaths <- yearDf(popDeaths, "deaths", pg$years,
+                         pg$npops, pg$timestep)
+  
+  totalDeaths <- popDeaths %>%
     group_by(year) %>%
     summarise(deaths = sum(deaths))
+  
+  annTotalDeaths <- yearDf(totalDeaths, "deaths", pg$years,
+                           1, pg$timestep)
   
   totalDeathsPlot <- ggplot(data = totalDeaths, 
                             aes(x = year, y = deaths)) +
@@ -291,7 +312,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     by = 20)) +
     plotOpts + ggtitle("Total HBV deaths")
   
-  popDeathsPlot <- ggplot(data = deaths, 
+  popDeathsPlot <- ggplot(data = annPopDeaths, 
                           aes(x = year, y = deaths, group = age_group)) + 
     geom_line(aes(color = age_group)) + 
     xlab("year") + ylab("Number of deaths") +
