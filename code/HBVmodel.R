@@ -217,7 +217,7 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     # Note the units of acute beta are FoI per infectious unit per year so 
     # we don't need to divide by the total population. 
      
-    acuteBeta <- t(as.matrix(waifw_matrix[2:(npops+1)]))
+    acuteBeta <- t(as.matrix(waifw_matrix))
     
     forceInfection <- matrix(0, ncol = 1, nrow = npops)
     forceInfection[1, ] <- pm$fol_mult[time] * sum(acuteBeta[, 1] *

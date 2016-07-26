@@ -235,6 +235,14 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
                                     by = 20)) +
     plotOpts + ggtitle("Overall incidence")
   
+  cumInfectionsPlot <- ggplot(data = annTotalInfections, 
+      aes(x = year, y = cumsum(new_infects))) +
+    geom_line(colour = "blue") +
+    xlab("Year") + ylab("New Infections") +
+    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
+                                    by = 20)) +
+    plotOpts + ggtitle("Total new infections")
+  
   popNewInfectionsPlot <- ggplot(data = annNewInfections, 
                         aes(x = year, y = infections, group= age_group)) +
     geom_line(aes(color = age_group)) + 
@@ -326,10 +334,11 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   # Put all plots in a grid
   print(plot_grid(totalPopPlot, agePopPlot, totalPrevPlot,
                   popPrevPlot, totalNewInfectionsPlot,
-                  totalIncidencePlot, popNewInfectionsPlot,
+                  totalIncidencePlot, cumInfectionsPlot,
+                  popNewInfectionsPlot,
                   popIncidencePlot, totalTreatmentPlot, 
                   popTreatmentPlot, totalDeathsPlot,
-                  popDeathsPlot, ncol = 4, nrow = 3))
+                  popDeathsPlot, ncol = 4, nrow = 4))
   
   
 }

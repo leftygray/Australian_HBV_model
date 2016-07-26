@@ -78,8 +78,13 @@ if (runSamples) {
 toc <- proc.time() - tic
 
 # Append the results to the project file - annoyingly R makes this tricky!
-save(list = c("bestResults", "paramResults", projectVars), 
-     file = projectFile)
+if (runSamples) {
+  save(list = c("bestResults", "paramResults", projectVars), 
+       file = projectFile)
+} else {
+  save(list = c("bestResults", projectVars), 
+       file = projectFile)
+}
 
   
 ```
