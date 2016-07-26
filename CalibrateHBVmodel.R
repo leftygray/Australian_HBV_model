@@ -5,7 +5,8 @@
 # assist with the calibration of the model to available data. It is a
 # combination of the 1-SetupModel.Rmd and 2-RunHBVmodel.Rmd scripts. 
 #
-# 1-SetupModel.Rmd needs to be run before using this function to ensure all # the project specifications are entered and after the calibrations is 
+# 1-SetupModel.Rmd needs to be run before using this function to ensure all
+# the project specifications are entered and after the calibrations is 
 # complete to save the parmeters into the project.
 # 
 # Calibration process.....
