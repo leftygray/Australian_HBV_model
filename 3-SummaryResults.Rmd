@@ -510,10 +510,6 @@ totalDeathsPlot
 
 ```{r Insert figure 15, include = TRUE}
 popDeathsPlot
-
-
-
-
 ```
 
 ### Vaccination
