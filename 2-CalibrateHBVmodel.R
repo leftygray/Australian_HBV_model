@@ -27,6 +27,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   
   graphics.off() # Close current plot
   
+  # Need to set wd to source file location
   basePath <- getwd()
   project_directory <- file.path(basePath, "projects")
  

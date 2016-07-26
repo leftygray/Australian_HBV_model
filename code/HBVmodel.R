@@ -215,7 +215,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     
     # Force of infection calculations -------------------------------------
     # TODO: add FOI equations and parameters to model
-    # Note the units of acute beta are FoI per infectious unit
+    # Note the units of acute beta are FoI per infectious unit per year so 
+    # we don't need to divide by the total population. 
     
     acuteBeta <- matrix(c(2.77966E-10, 2.77966E-10, 2.77966E-10, 
                           2.77966E-10, 2.77966E-10, 2.77966E-10, 
@@ -224,20 +225,21 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
                           9.26553E-10, 9.26553E-10, 9.26553E-10, 
                           9.26553E-10), nrow = 4, ncol = 4)
     
-    
     chronicBeta <- 0.16
     
     forceInfection <- matrix(0, ncol = 1, nrow = npops)
     forceInfection[1, ] <- pm$fol_mult[time] * sum(acuteBeta[, 1] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
     
     forceInfection[2, ] <- pm$fol_mult[time] * sum(acuteBeta[, 2] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
     
     forceInfection[3, ] <- pm$fol_mult[time] * sum(acuteBeta[, 3] * 
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
     forceInfection[4, ] <- pm$fol_mult[time] * sum(acuteBeta[, 4] *
-      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) 
+    
+    forceInfection <- forceInfection * dt # Convert annual to timestep
     
     # Equations -----------------------------------------------------------
 
