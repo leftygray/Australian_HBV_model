@@ -87,7 +87,7 @@ midyearIndex <- function(n, timestep) {
   #   
   #-----------------------------------------------------------------------
   
-  seq(1, n, 1/timestep) + round(1/timestep/2)
+  seq(1, n, 1 / timestep) + round(1 / timestep / 2)
 }
 
 sumYear <- function(vector, timestep) {
@@ -106,27 +106,35 @@ sumYear <- function(vector, timestep) {
                        sum)))
 }
 
-yearDf <- function(df, sumVar, midVar, pg, divideVar = NULL) {
+yearDf <- function(df, sumVar, years, npops, timestep, 
+                   midVar = NULL, divideVar = NULL) {
   # This function applys sumYear and midyear Index to a data frame of 
   # modelling results. Primarily used to produce a data frame with annual 
   # indicators rather than for each time step. 
   # 
   # Args:
   #   df:
-  #   sumVar: String naming variable to calculate yearly summs
-  #   midVar: String naming variable to extract mid year estimates from
-  #   pg: project specifications
+  #   sumVar: String naming variable to calculate yearly sums
+  #   years: Vector of years simulated
+  #   npops: Number of populations in the dataframe
+  #   timestep: Simulation timestep
+  #   midVar: String naming variable to extract mid year estimates from.
+  #   Default is NULL as it is optional.
   #   divideVar: String naming variable given by sumVar / midVar. Default
-  #     is NULL as it is optional
+  #     is NULL as it is optional. Requires midVar to be non-Null
   # Returns:
   #   Dataframe with annual/yearly estimates
   # 
   # ----------------------------------------------------------------------
   
-  yearFrame <- df[seq(1, nrow(df), 1 / pg$timestep), ]
-  yearFrame[, sumVar] <- sumYear(df[, sumVar], pg$timestep)
-  yearFrame$year <- rep(head(pg$years, -1), pg$npops)
-  yearFrame[, midVar] <- df[, midVar][midyearIndex(nrow(df))]
+  yearFrame <- df[seq(1, nrow(df), 1 / timestep), ]
+  yearFrame[, sumVar] <- sumYear(as.matrix(df[, sumVar]), timestep)
+  yearFrame$year <- rep(head(years, -1), npops)
+  
+  if (!is.null(midVar)) {
+    yearFrame[, midVar] <- df[midyearIndex(nrow(df), timestep), midVar]
+  }
+  
   if (!is.null(divideVar)) {
     yearFrame[, divideVar] <- yearFrame[, sumVar] / 
       yearFrame[, midVar]
@@ -147,7 +155,7 @@ popSizes$time_step <- as.numeric(popSizes$time_step)
 
 popSizes <- popSizes %>% # add pts as well
   mutate(year = pg$start_year + (time_step - 1) * pg$timestep) 
-
+# 
 totalPop <- popSizes %>%
   group_by(year) %>%
   summarise(totalpop = sum(popsize)) 
@@ -156,8 +164,8 @@ totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Population size") +
   coord_cartesian(xlim = c(startYear, endYear)) +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   plotOpts
 
 popSizesAge <- popSizes %>%
@@ -178,8 +186,8 @@ agePopPlot <- ggplot(data = plotAgePops,
                      aes(x = year, y = totalpop, group = age_group)) +
   geom_line(colour = "blue") +
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 50)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population size") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
@@ -206,8 +214,8 @@ totalInfectedPlot <- ggplot(data = totalPrev,
                         aes(x = year, y = total_infected)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Total number infected") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
@@ -215,8 +223,8 @@ totalPrevPlot <- ggplot(data = totalPrev,
                         aes(x = year, y = overall_prev)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Overall prevalence") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
@@ -231,8 +239,8 @@ popInfectedPlot <- ggplot(data = plotPrevPops,
                      aes(x = year, y = numinfected, group = age_group)) +
   geom_line(colour = "blue") +
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 50)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population size") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
@@ -241,8 +249,8 @@ popPrevPlot <- ggplot(data = plotPrevPops,
                      aes(x = year, y = prevalence, group = age_group)) +
   geom_line(colour = "blue") +
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 50)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population prevalence") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
@@ -258,8 +266,8 @@ allPopsPlot <- ggplot(data = plotPops,
                       aes(x = year, y = popsize, group = state)) +
   facet_wrap(~age_group, ncol = 2, scales = "free_x") +
   geom_line(aes(colour = state)) +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 50)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   scale_colour_brewer(name = "Infection state", palette = "Set1",
                       labels = c("Susceptible", "Acute", "Chronic",
                                  "Cleared", "Immune")) +
@@ -277,10 +285,8 @@ newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
   mutate(incidence = infections / popSizesAge$totalpop,
          total_pop = popSizesAge$totalpop)
 
-
-
-
-annNewInfections <- yearDf(newInfections, "infections", "total_pop", pg,
+annNewInfections <- yearDf(newInfections, "infections", pg$years,
+                           pg$npops, pg$timestep, midVar = "total_pop",
                            divideVar = "incidence")
 
 # Total new infections
@@ -290,21 +296,26 @@ totalInfections <- newInfections %>%
             total_pop = sum(total_pop)) %>%
   mutate(incidence = new_infects / total_pop) 
 
-totalNewInfectionsPlot <- ggplot(data = totalInfections, 
+annTotalInfections <- yearDf(totalInfections, "new_infects", pg$years,
+                             1, pg$timestep, midVar = "total_pop",
+                             divideVar = "incidence")
+
+# Create total plots
+totalNewInfectionsPlot <- ggplot(data = annTotalInfections, 
     aes(x = year, y = new_infects)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("New Infections") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
-totalIncidencePlot <- ggplot(data = totalInfections, 
+totalIncidencePlot <- ggplot(data = annTotalInfections, 
     aes(x = year, y = incidence * 1e5)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Incidence per 100,000") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
@@ -313,8 +324,8 @@ popNewInfectionsPlot <- ggplot(data = annNewInfections,
     aes(x = year, y = infections, group= age_group)) +
   geom_line(aes(color = age_group)) + 
   xlab("Year") + ylab("New infections") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) + 
@@ -325,8 +336,8 @@ popIncidencePlot <- ggplot(data = newInfections,
   aes(x = year, y = incidence * 1e5, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
   xlab("Year") + ylab("Incidence per 100,000") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
@@ -339,25 +350,31 @@ popTreatments <- as.data.frame(t(bestResults$newTreatments)) %>%
   select(year, everything()) %>%
   gather("age_group", "treatments", 2:(pg$npops+1)) 
 
+annPopTreatments <- yearDf(popTreatments, "treatments", pg$years,
+                           pg$npops, pg$timestep)
+
 totalTreatments <- popTreatments %>%
   group_by(year) %>%
   summarise(treatments = sum(treatments))
 
-totalTreatmentPlot <- ggplot(data = totalTreatments, 
+annTotalTreatments <- yearDf(totalTreatments, "treatments", pg$years,
+                             1, pg$timestep)
+
+totalTreatmentPlot <- ggplot(data = annTotalTreatments, 
     aes(x = year, y = treatments)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Number initiated treatment") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
-popTreatmentPlot <- ggplot(data = popTreatments, 
+popTreatmentPlot <- ggplot(data = annPopTreatments, 
   aes(x = year, y = treatments, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
   xlab("year") + ylab("Number initiated treatment") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
@@ -365,30 +382,37 @@ popTreatmentPlot <- ggplot(data = popTreatments,
   plotOpts + theme(legend.position = "right")
 
 # HBV deaths -------------------------------------------------------------
-deaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
+popDeaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
   mutate(year = pg$pts) %>%
   select(year, everything()) %>%
   gather("age_group", "deaths", 2:(pg$npops+1)) 
 
-totalDeaths <- deaths %>%
+annPopDeaths <- yearDf(popDeaths, "deaths", pg$years,
+                       pg$npops, pg$timestep)
+
+totalDeaths <- popDeaths %>%
   group_by(year) %>%
   summarise(deaths = sum(deaths))
 
-totalDeathsPlot <- ggplot(data = totalDeaths, 
+annTotalDeaths <- yearDf(totalDeaths, "deaths", pg$years,
+                         1, pg$timestep)
+
+
+totalDeathsPlot <- ggplot(data = annTotalDeaths, 
     aes(x = year, y = deaths)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Number of deaths") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
-popDeathsPlot <- ggplot(data = deaths, 
+popDeathsPlot <- ggplot(data = annPopDeaths, 
   aes(x = year, y = deaths, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
   xlab("year") + ylab("Number of deaths") +
-  scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                  by = 20)) +
+  scale_x_continuous(breaks = seq(startYear, endYear, 
+                                  by = 5)) +
   coord_cartesian(xlim = c(startYear, endYear)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
