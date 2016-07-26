@@ -142,7 +142,10 @@ for (var in colnames(bestEstimateYears)) {
     indices <- ((year-1)* 1/pg$timestep + 1): (year * 1/pg$timestep + 1)
     yearValues <- seq(tempValues[year], tempValues[year+1], 
                       length = (1 + 1/pg$timestep))
-    best_estimates[indices, var] <- yearValues
+
+    # Note each time step is given the annual value 
+    # This is adjusted in the model code
+    best_estimates[indices, var] <- yearValues 
   }  
 }
 

@@ -78,16 +78,20 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   
   # Progression of HBV only affects acute and chronics --------------------
   progress <- matrix(0, ncol = npts + 1, nrow = npops)
-  progress[1, ] <- pm$ac_res_rate * pm$prog_chron_0 #age group 0 to 4
+  progress[1, ] <- pm$ac_res_rate * pm$prog_chron_0  #age group 0 to 4
   progress[2, ] <- pm$ac_res_rate * pm$prog_chron_1  #age group 5 to 14
   progress[3, ] <- pm$ac_res_rate * pm$prog_chron_2  #age group 15 to 44
   progress[4, ] <- pm$ac_res_rate * pm$prog_chron_3  #age group 45  
+  
+  progress <- progress * dt^2 # Convert annual to timestep
   
   # Births ----------------------------------------------------------------
   # births differ based on time but only applied to susceptibles and only 
   # to age group 0 so other age groups have to be 0
   births <- matrix(0, ncol = npts + 1, nrow = npops)
   births[1, ] <- pm$births
+  
+  births <- births * dt # Convert annual to timestep
   
   # Mortality -------------------------------------------------------------
   
@@ -100,6 +104,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   bgMortality[3, ] <- pm$bgmort15to44
   bgMortality[4, ] <- pm$bgmort45
   
+  bgMortality <- bgMortality * dt # Convert annual to timestep
+  
   # hbvMortality differs according to age group and HBV status acute and 
   # chronic only
   hbvMortality <- array(0, c(npops, nstates, npts +1), dimnames = dimNames)
@@ -111,6 +117,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   hbvMortality[2, "ch", ] <- pm$chr_mort_rate_1
   hbvMortality[3, "ch", ] <- pm$chr_mort_rate_2
   hbvMortality[4, "ch", ] <- pm$chr_mort_rate_3
+  
+  hbvMortality <- hbvMortality * dt # Convert annual to timestep
   
   # Vaccination -----------------------------------------------------------
   # vac only applies to susceptibles and immune, differs based on age 
@@ -133,6 +141,9 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     2 * vac_avail #age group 15 to 44
   vac[3, ] <- pm$vac_eff_3 * pm$vac_prop_3 *
     3 * vac_avail #age group 45 
+  
+  vac <- vac * dt # Convert annual to timestep. 
+                  # Note only rate is the proportion 
   
   # Migration -------------------------------------------------------------
   # migration proportions differ based on age group, HBV status, and time;
@@ -171,6 +182,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   migration["age15to44", "i", ] <- 0 #* pm$mig_series[1] * mig_pred
   migration["age45", "i", ] <- 0 #* pm$mig_series[1] * mig_pred
     
+  migration <- migration * dt # Convert annual to timestep
+  
   # Clearance -------------------------------------------------------------
   # clearance only applied to chronics and cleared, differ by age group
   clear <- matrix(0, nrow = npops, ncol = npts + 1)
@@ -179,12 +192,19 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   clear[3, ] <- pm$clr_rate_2 #age group 15 to 44
   clear[4, ] <- pm$clr_rate_3 #age group 45  
   
+  clear <- clear * dt # Convert annual to timestep
+  
   # Recovery --------------------------------------------------------------
   recover <- matrix(0, nrow = npops, ncol = npts + 1)
   recover[1, ] <- pm$ac_res_rate * (1 - pm$prog_chron_0) 
   recover[2, ] <- pm$ac_res_rate * (1 - pm$prog_chron_1) 
   recover[3, ] <- pm$ac_res_rate * (1 - pm$prog_chron_2)  
   recover[4, ] <- pm$ac_res_rate * (1 - pm$prog_chron_3)  
+  
+  recover <- recover * dt # Convert annual to timestep
+  
+  # transitions -----------------------------------------------------------
+  transitions <- transitions * dt # Convert annual to timestep
   
   # Loop over state equations ---------------------------------------------
   
@@ -193,8 +213,9 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     oldPop <- allPops[, , time - 1]
     newPop <- allPops[, , time]
     
-    # Force of infection calculations ---------------------------------------
+    # Force of infection calculations -------------------------------------
     # TODO: add FOI equations and parameters to model
+    # Note the units of acute beta are FoI per infectious unit
     
     acuteBeta <- matrix(c(2.77966E-10, 2.77966E-10, 2.77966E-10, 
                           2.77966E-10, 2.77966E-10, 2.77966E-10, 
@@ -202,7 +223,7 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
                           3.70621E-09, 3.70621E-09, 3.70621E-09,
                           9.26553E-10, 9.26553E-10, 9.26553E-10, 
                           9.26553E-10), nrow = 4, ncol = 4)
-    acuteBeta <- t(acuteBeta)
+    
     
     chronicBeta <- 0.16
     
@@ -213,15 +234,16 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     forceInfection[2, ] <- pm$fol_mult[time] * sum(acuteBeta[, 2] *
       (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
     
-    forceInfection[3, ] <- pm$fol_mult[time] * sum(acuteBeta[, 3] * (oldPop[, "a"] + chronicBeta *
-                                                                      oldPop[, "ch"])) / sum(oldPop)
-    forceInfection[4, ] <- pm$fol_mult[time] * sum(acuteBeta[, 4] * (oldPop[, "a"] + chronicBeta *
-                                                                      oldPop[, "ch"])) / sum(oldPop)
+    forceInfection[3, ] <- pm$fol_mult[time] * sum(acuteBeta[, 3] * 
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
+    forceInfection[4, ] <- pm$fol_mult[time] * sum(acuteBeta[, 4] *
+      (oldPop[, "a"] + chronicBeta * oldPop[, "ch"])) / sum(oldPop)
     
     # Equations -----------------------------------------------------------
 
     newPop[, "s"] <- oldPop[, "s"] + 
-      as.numeric(transitions %*% oldPop[, "s"]) +
+      as.numeric(t(transitions) %*% oldPop[, "s"]) - 
+      c((t(transitions) %*% oldPop[, "s"])[2:pg$npops], 0) -
       forceInfection * oldPop[, "s"] +
       births[, time] + migration[, "s", time] -
       bgMortality[, time] * oldPop[, "s"] -
@@ -232,7 +254,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     # because acute stage is short so when people enter Australia they are 
     # either susceptible of chronically infected. May need review later. 
     newPop[, "a"] <-  oldPop[, "a"] + 
-      as.numeric(transitions %*% oldPop[, "a"]) +
+      as.numeric(t(transitions) %*% oldPop[, "a"]) - 
+      c((t(transitions) %*% oldPop[, "a"])[2:pg$npops], 0) +
       forceInfection * oldPop[, "a"] +
       migration[, "a", time] -
       progress[, time] * oldPop[, "a"] -
@@ -241,7 +264,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
       recover[, time] * oldPop[, "a"]         
 
     newPop[, "ch"] <- oldPop[, "ch"] + 
-      as.numeric(transitions %*% oldPop[, "ch"]) +
+      as.numeric(t(transitions) %*% oldPop[, "ch"]) - 
+      c((t(transitions) %*% oldPop[, "ch"])[2:pg$npops], 0) +
       progress[, time] * oldPop[, "a"] +
       migration[, "ch", time] -
       bgMortality[, time] * oldPop[, "ch"] -
@@ -249,7 +273,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
       clear[, time] * oldPop[, "ch"]
    
     newPop[, "cl"] <- oldPop[, "cl"] + 
-      as.numeric(transitions %*% oldPop[, "cl"]) +
+      as.numeric(t(transitions) %*% oldPop[, "cl"]) - 
+      c((t(transitions) %*% oldPop[, "cl"])[2:pg$npops], 0) +
       migration[, "cl", time] -
       bgMortality[, time] * oldPop[, "cl"] -
       hbvMortality[, "cl", time] * oldPop[, "cl"] + 
@@ -257,7 +282,8 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
       clear[, time] * oldPop[, "ch"]     
 
     newPop[, "i"] <- oldPop[, "i"] + 
-      as.numeric(transitions %*% oldPop[, "i"]) +
+      as.numeric(t(transitions) %*% oldPop[, "i"]) - 
+      c((t(transitions) %*% oldPop[, "i"])[2:pg$npops], 0) +
       migration[, "i", time] -
       bgMortality[, time] * oldPop[, "i"] -
       hbvMortality[, "i", time] * oldPop[, "i"] + 
