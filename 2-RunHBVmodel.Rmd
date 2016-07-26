@@ -62,14 +62,24 @@ bestResults <- HBVmodel(pg, best_estimates, best_initial_pop, pg$pts,
                         transitions, waifw_matrix)
 
 # Run sampled parameter sets
-# if (runSamples) {
-# }
+if (runSamples) {
+  paramResults <- list()
+  
+  for (set in 1:pg$parameter_samples){
+    paramSet <- paste0("paramSet", toString(set))
+    
+    paramResults[[paramSet]] <- HBVmodel(pg, param_sets[[paramSet]], 
+                                         param_initial_pops[[paramSet]],
+                                         pg$pts, transitions, waifw_matrix)
+  }
+}
 
 # Stop the clock
 toc <- proc.time() - tic
 
 # Append the results to the project file - annoyingly R makes this tricky!
-save(list = c("bestResults", projectVars), file = projectFile)
+save(list = c("bestResults", "paramResults", projectVars), 
+     file = projectFile)
 
   
 ```
