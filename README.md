@@ -47,6 +47,8 @@ The following R markdown scripts create specific projects, run the HBV model, an
 
 - **2-RunHBVmodel.Rmd**: This script is used to actually run the HBV model for the specified project. All simulation results are appended to the project's .rda file.
 
+- **2-CalibrateHBVmodel.R**: This R file contains a function which is useful for calibrating the model. It is a combination of the 1-SetupModel.Rmd and 2-RunHBVmodel.Rmd scripts. After a user changes the input parameter files this function can be run to produce plots of the model output for visual inspection. **Note**: Once you are finished with the calibration function you need to rerun 1-SetupModel.Rmd to save the final parameters in the project. 
+
 - **3-SummaryResults.Rmd**: This script is used to produce figures of summary results for a specified project. It is written as an R markdown document so the figures can be generated as part of a summary results Word document using knitr. 
 
 Note as these are scripts, not functions, care should be taken to ensure the project specifications are correct before running a script especially after if any updates have been pulled from the repository.  
