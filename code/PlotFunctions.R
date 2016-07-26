@@ -6,7 +6,7 @@
 # the HBV model results and for figure generation. 
 
 
-midyearIndex <- function(n, timestep) {
+MidyearIndex <- function(n, timestep) {
   # This function extracts the mid year index. This used for 
   # calculating per population number annual outputs by dividing
   # annual value by mid year population size
@@ -22,7 +22,7 @@ midyearIndex <- function(n, timestep) {
   seq(1, n, 1 / timestep) + round(1 / timestep / 2)
 }
 
-sumYear <- function(vector, timestep) {
+SumYear <- function(vector, timestep) {
   # This function is used to sum every 1/timestep values of a vector. 
   # Primarily used to calculate annual indicators
   # 
@@ -60,11 +60,11 @@ yearDf <- function(df, sumVar, years, npops, timestep,
   # ----------------------------------------------------------------------
   
   yearFrame <- df[seq(1, nrow(df), 1 / timestep), ]
-  yearFrame[, sumVar] <- sumYear(as.matrix(df[, sumVar]), timestep)
+  yearFrame[, sumVar] <- SumYear(as.matrix(df[, sumVar]), timestep)
   yearFrame$year <- rep(head(years, -1), npops)
   
   if (!is.null(midVar)) {
-    yearFrame[, midVar] <- df[midyearIndex(nrow(df), timestep), midVar]
+    yearFrame[, midVar] <- df[MidyearIndex(nrow(df), timestep), midVar]
   }
   
   if (!is.null(divideVar)) {
@@ -73,3 +73,148 @@ yearDf <- function(df, sumVar, years, npops, timestep,
   }
   return(yearFrame)
 }
+
+
+
+popResults <- function(pg, bestResults, paramResults,
+                       populations = NULL, states = NULL,
+                       range = FALSE) {
+  # This function organizes and merges the population size results
+  
+  # First organize the best estimates
+  bestPopSizes <- as.data.frame.table(bestResults$allPops)
+  colnames(bestPopSizes) <- c("population", "state", "time_step", 
+                              "popsize") 
+  bestPopSizes$time_step <- as.numeric(bestPopSizes$time_step)
+  
+  bestPopSizes <- bestPopSizes %>% # add pts as well
+    mutate(year = pg$start_year + (time_step - 1) * pg$timestep) %>%
+    select(year, time_step, everything()) %>%
+    select(-time_step) %>%
+    arrange(population) %>%
+    rename(best = popsize)
+  
+  # Now append each param set results
+  popSizes <- bestPopSizes
+  
+  for (set in 1:pg$parameter_samples) {
+    paramSet <- paste0("paramSet", toString(set))
+    setPopSizes <- as.data.frame.table(paramResults[[paramSet]]$allPops)
+    colnames(setPopSizes) <- c("population", "state", "time_step",
+                               "popsize") 
+    setPopSizes <- arrange(setPopSizes, population)
+    popSizes[, paste0("set", toString(set))] <-  setPopSizes$popsize
+    
+  }
+
+  # Extract the subresults we want
+  if (!is.null(populations) || !is.null(states)) {
+    if (length(populations) == 1 && populations == "all") {
+      if (length(states) == 1 && states == "all") {
+        popSizes <- popSizes %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      } else if (is.null(states)) {
+        print("hi")
+        popSizes <- popSizes %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation, state) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      } else {
+        popSizes <- popSizes %>%
+          filter(state %in% states) %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      }
+    } else if (is.null(populations)){
+      if (length(states) == 1 && states == "all") {
+        popSizes <- popSizes %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation, population) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      } else {
+        popSizes <- popSizes %>%
+          filter(state %in% states) %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation, population) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      }
+    } else {
+      if (length(states) == 1 && states == "all") {
+        popSizes <- popSizes %>%
+          filter(population %in% populations) %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      } else {
+        popSizes <- popSizes %>%
+          filter(state %in% states) %>%
+          filter(population %in% populations) %>%
+          gather("simulation", "popsize", 4:ncol(popSizes)) %>%
+          group_by(year, simulation) %>%
+          summarise(total_pop = sum(popsize)) %>%
+          spread(simulation, total_pop)
+      }
+    }  
+  }
+  
+  # Ungroup in preparation for next manipulation 
+  
+  popSizes <- ungroup(popSizes)
+  bestValues <- popSizes$best
+  
+  if (range) {
+    bestcol <- which(colnames(popSizes) == "best")
+
+    popSizes <- gather(popSizes, "sim", "popsize", 
+                       bestcol:ncol(popSizes)) 
+    
+    if (is.null(populations) && is.null(states)) {
+      popSizes <- group_by(popSizes, year, population, state)
+    } else if (is.null(populations)) {
+      popSizes <- group_by(popSizes, year, population)
+    } else if (is.null(states)) {
+      popSizes <- group_by(popSizes, year, state)
+    } else {
+      popSizes <- group_by(popSizes, year)
+    }
+    
+    popSizes <- popSizes %>%
+      summarise(min = min(popsize),
+                max = max(popsize)) %>%
+      ungroup() %>%
+      mutate(best = bestValues)
+    
+    if (is.null(populations) && is.null(states)) {
+      popSizes <- select(popSizes, year, population, state,
+                         best, everything())
+    } else if (is.null(populations)) {
+      popSizes <- select(popSizes, year, population, best, everything())
+    } else if (is.null(states)) {
+      popSizes <- select(popSizes, year, state, best, everything())
+    } else {
+      popSizes <- select(popSizes, year, best, everything())
+    }
+  }
+  
+  
+  # Return the final population data frame
+  return(popSizes)
+}
+
+
+# PopPlot <- function(popSizes, allsims = c("ribbon", "line", NULL), 
+#                     summaryline = c("bestfit", "median", NULL), 
+#                     baseline = TRUE, xlimits = NULL, ylabel = NULL) {
+#   
+#   
+#   
+# }

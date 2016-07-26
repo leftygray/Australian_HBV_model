@@ -33,7 +33,7 @@ source(file.path(Rcode, "HBVmodel.R"))
 project <- "Australia_HBV_estimates-BM"
 
 # Options
-runSamples <- FALSE
+runSamples <- TRUE
 
 ```
 
