@@ -256,7 +256,7 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
     newPop[, "a"] <-  oldPop[, "a"] + 
       as.numeric(t(transitions) %*% oldPop[, "a"]) - 
       c((t(transitions) %*% oldPop[, "a"])[2:pg$npops], 0) +
-      forceInfection * oldPop[, "a"] +
+      forceInfection * oldPop[, "s"] +
       migration[, "a", time] -
       progress[, time] * oldPop[, "a"] -
       bgMortality[, time] * oldPop[, "a"] -
