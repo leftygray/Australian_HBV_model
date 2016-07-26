@@ -58,6 +58,9 @@ project <- "Australia_HBV_estimates-BM"
 displayPlots <- TRUE
 savePlots <- TRUE
 
+startYear <- 2000
+endYear <- 2030
+
 ```
 
 ```{r Load project results}
@@ -87,6 +90,7 @@ totalPop <- popSizes %>%
 totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Population size") +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
   plotOpts
@@ -111,6 +115,7 @@ agePopPlot <- ggplot(data = plotAgePops,
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 50)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population size") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
 
@@ -138,6 +143,7 @@ totalInfectedPlot <- ggplot(data = totalPrev,
   xlab("Year") + ylab("Total number infected") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
 totalPrevPlot <- ggplot(data = totalPrev, 
@@ -146,6 +152,7 @@ totalPrevPlot <- ggplot(data = totalPrev,
   xlab("Year") + ylab("Overall prevalence") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
 # Plot of prevalence in every group - first sort out level names for
@@ -161,6 +168,7 @@ popInfectedPlot <- ggplot(data = plotPrevPops,
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 50)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population size") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
 
@@ -170,6 +178,7 @@ popPrevPlot <- ggplot(data = plotPrevPops,
   facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 50)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population prevalence") +
   plotOpts + theme(panel.margin = unit(2, "lines"))
 
@@ -189,6 +198,7 @@ allPopsPlot <- ggplot(data = plotPops,
   scale_colour_brewer(name = "Infection state", palette = "Set1",
                       labels = c("Susceptible", "Acute", "Chronic",
                                  "Cleared", "Immune")) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   xlab("Year") + ylab("Population size") +
   plotOpts + theme(legend.position = "right") + 
   theme(panel.margin = unit(2, "lines"))
@@ -204,27 +214,27 @@ newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
 
 # Total new infections
 totalInfections <- newInfections %>%
-  group_by(year, age_group) %>%
+  group_by(year) %>%
   summarise(new_infects = sum(infections),
             total_pop = sum(total_pop)) %>%
-  mutate(incidence = new_infects / total_pop) %>%
-  ungroup() %>%
-  arrange(age_group)
+  mutate(incidence = new_infects / total_pop) 
 
-totalNewInfectionsPlot <- ggplot(data = newInfections, 
+totalNewInfectionsPlot <- ggplot(data = totalInfections, 
     aes(x = year, y = new_infects)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("New Infections") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
-totalIncidencePlot <- ggplot(data = newInfections, 
+totalIncidencePlot <- ggplot(data = totalInfections, 
     aes(x = year, y = incidence * 1e5)) +
   geom_line(colour = "blue") +
   xlab("Year") + ylab("Incidence per 100,000") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
 # By age group
@@ -237,6 +247,7 @@ popNewInfectionsPlot <- ggplot(data = newInfections,
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) + 
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts + theme(legend.position = "right")
 
 popIncidencePlot <- ggplot(data = newInfections, 
@@ -248,6 +259,7 @@ popIncidencePlot <- ggplot(data = newInfections,
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts + theme(legend.position = "right")
   
 # Treatment --------------------------------------------------------------
@@ -266,6 +278,7 @@ totalTreatmentPlot <- ggplot(data = totalTreatments,
   xlab("Year") + ylab("Number initiated treatment") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
 popTreatmentPlot <- ggplot(data = popTreatments, 
@@ -277,6 +290,7 @@ popTreatmentPlot <- ggplot(data = popTreatments,
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts + theme(legend.position = "right")
 
 # HBV deaths -------------------------------------------------------------
@@ -295,14 +309,16 @@ totalDeathsPlot <- ggplot(data = totalDeaths,
   xlab("Year") + ylab("Number of deaths") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts
 
 popDeathsPlot <- ggplot(data = deaths, 
-  aes(x = year, y = treatments, group = age_group)) + 
+  aes(x = year, y = deaths, group = age_group)) + 
   geom_line(aes(color = age_group)) + 
   xlab("year") + ylab("Number of deaths") +
   scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
                                   by = 20)) +
+  coord_cartesian(xlim = c(startYear, endYear)) +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
@@ -388,32 +404,32 @@ agePopPlot
 
 **Figure 3** - Total number of people infected with HBV over time.
 
-```{r Insert figure 1, include = TRUE}
+```{r Insert figure 3, include = TRUE}
 totalInfectedPlot
 ```
 
 **Figure 4** - Overall population prevalence over time.
 
-```{r Insert figure 1, include = TRUE}
+```{r Insert figure 4, include = TRUE}
 totalPrevPlot
 ```
 
 **Figure 5** - Number of people infected with HBV over time by age group.
 
-```{r Insert figure 1, include = TRUE}
+```{r Insert figure 5, include = TRUE}
 popInfectedPlot
 ```
 
 **Figure 6** - HBV prevalence by age group over time.
 
-```{r Insert figure 1, include = TRUE}
+```{r Insert figure 6, include = TRUE}
 popPrevPlot
 ```
 
 
 **Figure 7** - Number of people in each stage of infection by age_group.
 
-```{r Insert figure 5, include = TRUE}
+```{r Insert figure 7, include = TRUE}
 allPopsPlot
 ```
 
@@ -422,25 +438,25 @@ allPopsPlot
 
 **Figure 8** - Total number of new HBV infections.
 
-```{r Insert figure 3, include = TRUE}
+```{r Insert figure 8, include = TRUE}
 totalNewInfectionsPlot
 ```
 
 **Figure 9** - Number of new HBV infections by age group.
 
-```{r Insert figure 3, include = TRUE}
+```{r Insert figure 9, include = TRUE}
 popNewInfectionsPlot
 ```
 
 **Figure 10** - Overall incidence per 100,000 people.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 10, include = TRUE}
 totalIncidencePlot
 ```
 
 **Figure 11** - Incidence per 100,000 people by age group.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 11, include = TRUE}
 popIncidencePlot
 ```
 
@@ -448,14 +464,14 @@ popIncidencePlot
 
 **Figure 12** - Total number of people initiating treatment per year.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 12, include = TRUE}
 totalTreatmentPlot
 ```
 
 **Figure 13** - Number of people initiating treatment per year by age
 group.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 13, include = TRUE}
 popTreatmentPlot
 ```
 
@@ -463,13 +479,13 @@ popTreatmentPlot
 
 **Figure 14** - Total number of deaths per year.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 14, include = TRUE}
 totalDeathsPlot
 ```
 
 **Figure 15** - Number of deaths per year by age group.
 
-```{r Insert figure 4, include = TRUE}
+```{r Insert figure 15, include = TRUE}
 popDeathsPlot
 ```
 
