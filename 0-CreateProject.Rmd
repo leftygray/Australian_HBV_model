@@ -87,7 +87,7 @@ constNamesPops <- c("sus_prop_", "acute_prop_", "chronic_prop_",
 # The following constant parameters are the same for all populations or
 # population agnostic.
 constNames <- c("init_pop", "mig_series", "dis_rate", "ac_res_rate",
-                "fol_mult", "vacc_tog")
+                "fol_mult", "vacc_tog", "chronic_beta")
 
 # Note pop_prop and init_pop are only used for setting up the initial 
 # population.
@@ -116,7 +116,8 @@ dir.create(projectFolder, showWarnings = FALSE)
 
 # Create other directories
 dir.create(file.path(projectFolder, "results"), showWarnings = FALSE)
-
+dir.create(file.path(projectFolder, "docs"), showWarnings = FALSE)
+dir.create(file.path(projectFolder, "data"), showWarnings = FALSE)
 
 # Create parameter files -------------------------------------------------
 npops <- length(population_names)
@@ -185,18 +186,18 @@ timeFactors$parameter <- colnames(timeVarying)
 write_csv(timeFactors, file.path(projectFolder,
                                "time_varying_ranges.csv"))
 
-# Create associated transitions and interactions files -------------------
+# Create associated transitions and waifw_matrix files -------------------
 transitions <- as.data.frame(matrix(0, nrow = npops, ncol = npops + 1))
 colnames(transitions) <- c("population", population_names)
 transitions$population <- population_names
 
-interactions <- transitions
+waifw_matrix <- transitions
 
 write_csv(transitions, file.path(projectFolder,
                                "population_transitions.csv"))
 
-write_csv(transitions, file.path(projectFolder,
-                               "population_interactions.csv"))
+write_csv(waifw_matrix, file.path(projectFolder,
+                               "population_waifw_matrix.csv"))
 
 ```
 
@@ -228,7 +229,7 @@ pg$nstates <- length(state_names)
 inputs <- list(initial_pops = initialPops, constants = constants,
                time_varying = timeVarying,
                time_varying_ranges = timeFactors,
-               transitions = transitions, interactions = interactions)
+               transitions = transitions, waifw_matrix = waifw_matrix)
 
 # Create project .rda files
 save(pg, inputs, file = file.path(projectFolder,

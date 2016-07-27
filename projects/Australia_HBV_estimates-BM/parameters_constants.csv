@@ -26,5 +26,6 @@ vac_prop_3,0,0,0
 mig_series,1.27273,0.9545475,1.5909125
 dis_rate,6,4.5,7.5
 ac_res_rate,4,3,5
-fol_mult,5,3.75,6.25
+fol_mult,1,0.75,1.25
 vacc_tog,1,0.75,1.25
+chronic_beta,0.16,0.14,0.18
