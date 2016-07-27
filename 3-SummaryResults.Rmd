@@ -62,14 +62,23 @@ savePlots <- FALSE
 startYear <- 2000
 endYear <- 2030
 
+# Results time
+resultsTime <- "base" # or enter the date and time string
+
 ```
 
 ```{r Load project results}
-# This loads all the project parameters and results including 
-# bestResults
+# This loads all the project parameters
 
 projectFile <- file.path(projectFolder, project, paste0(project, ".rda"))
 load(projectFile)
+
+# This loads all the project results
+resultsFile <- file.path(projectFolder, project, "results", 
+                         paste0("results_", resultsTime), 
+                          paste0("results_", resultsTime, ".rda"))
+
+load(resultsFile)
 ```
 
 ```{r Generate plots}
@@ -79,38 +88,23 @@ totalPop <- popResults(pg, bestResults, paramResults,
                        populations = "all", states = "all",
                        range = TRUE) 
 
-totalPopPlot <- ggplot(data = totalPop, aes(x = year)) +
-  geom_ribbon(aes(ymin = min, ymax = max),
-              fill = "blue", alpha = 0.4) +
-  geom_line(aes(y = best), colour = "blue") +
-  xlab("Year") + ylab("Population size") +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  plotOpts
+totalPopPlot <- indicatorPlot(totalPop, ylabel = "Population size",
+                              xlimits = c(startYear, endYear, 5))
 
+
+# Plot of population size in every group 
 popSizesAge <- popResults(pg, bestResults, paramResults,
                           states = "all", range = TRUE)
 
-# Plot of population size in every group - first rename levels for
-# plotting
+# First rename levels for plotting
 plotAgePops <- popSizesAge
 plotAgePops$population <- factor(plotAgePops$population)
-
 levels(plotAgePops$population) <- c("Age < 4", "Age 5 to 14", 
                                    "Age 15 to 44", "Age > 45") 
 
-agePopPlot <- ggplot(data = plotAgePops, 
-                     aes(x = year, group = population)) +
-  geom_ribbon(aes(ymin = min, ymax = max),
-              fill = "blue", alpha = 0.4) +
-  geom_line(aes(y = best), colour = "blue") +
-  facet_wrap(~population, ncol = 2, scales = "free") + 
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  xlab("Year") + ylab("Population size") +
-  plotOpts + theme(panel.margin = unit(2, "lines"))
+agePopPlot <- indicatorPlot(plotAgePops, ylabel = "Population size",
+                              xlimits = c(startYear, endYear, 5),
+                            facetPlot = "population", range = TRUE)
 
 # Population prevalence --------------------------------------------------
 

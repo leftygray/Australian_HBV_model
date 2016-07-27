@@ -75,7 +75,6 @@ yearDf <- function(df, sumVar, years, npops, timestep,
 }
 
 
-
 popResults <- function(pg, bestResults, paramResults,
                        populations = NULL, states = NULL,
                        range = FALSE) {
@@ -211,10 +210,72 @@ popResults <- function(pg, bestResults, paramResults,
 }
 
 
-# PopPlot <- function(popSizes, allsims = c("ribbon", "line", NULL), 
-#                     summaryline = c("bestfit", "median", NULL), 
-#                     baseline = TRUE, xlimits = NULL, ylabel = NULL) {
-#   
-#   
-#   
-# }
+indicatorPlot <- function(data, ylabel = NULL, range = TRUE,
+                          xlimits = NULL, facetPlot = NULL, 
+                          groupPlot = NULL) {
+
+  # Set defaults
+  if (is.null(ylabel)) {
+    ylabel = indicator
+  }
+  
+  if (is.null(xlimits)) {
+    xlimits = c(min(data$year), max(data$year), 20)
+  }
+  
+  if (is.null(facetPlot)) {
+    plotFacets = FALSE
+  } else {
+    plotFacets = TRUE
+  }
+  
+  if (is.null(groupPlot)) {
+    plotGroups = FALSE
+  } else {
+    plotGroups = TRUE
+  }
+  
+  # Create the plot
+  if (range) {
+    if (plotGroups) {
+      plot <- ggplot(data = data, aes(x = year, group = groupPlot)) +
+        geom_ribbon(aes(ymin = min, ymax = max),
+                    fill = groupPlot, alpha = 0.4) +
+        geom_line(aes(y = best, colour = groupPlot)) +
+        xlab("Year") + ylab(ylabel) +
+        plotOpts + theme(legend.position = "right")
+    } else {  
+      plot <- ggplot(data = data, aes(x = year)) +
+        geom_ribbon(aes(ymin = min, ymax = max),
+                    fill = "blue", alpha = 0.4) +
+        geom_line(aes(y = best), colour = "blue") +
+        xlab("Year") + ylab(ylabel) +
+        plotOpts
+    }
+  } else {
+    if (plotGroups) {
+      plot <- ggplot(data = data, aes(x = year, group = groupPlot)) +
+        geom_line(aes(y = best, colour = groupPlot)) +
+        xlab("Year") + ylab(ylabel) +
+        plotOpts + theme(legend.position = "right")
+    } else {  
+      plot <- ggplot(data = data, aes(x = year)) +
+        geom_line(aes(y = best), colour = "blue") +
+        xlab("Year") + ylab(ylabel) +
+        plotOpts
+    }
+  }
+  
+  plot <- plot + coord_cartesian(xlim = xlimits[1:2]) +
+    scale_x_continuous(breaks = seq(xlimits[1], xlimits[1], 
+                                    by = xlimits[3]))
+
+  if (plotFacets) {
+    plot <- plot + facet_wrap(as.formula(paste("~", facetPlot)),
+                              ncol = 2, scales = "free") +
+    theme(panel.margin = unit(2, "lines"))
+  }
+  
+  # return the final plot
+  return(plot)
+}

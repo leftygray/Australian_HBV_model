@@ -24,6 +24,9 @@ source(file.path(Rcode, "DataLibraries.R"))
 # Source model files
 source(file.path(Rcode, "HBVmodel.R"))
 
+# Current date and time for appending to results
+currTime <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+
 ```
 
 ## User specifications
@@ -34,6 +37,9 @@ project <- "Australia_HBV_estimates-BM"
 
 # Options
 runSamples <- TRUE
+saveAsBase <- TRUE # if TRUE doesn't append time to results and overwrites
+                    # a base file. Useful for storing main results or
+                    # testing
 
 ```
 
@@ -77,13 +83,32 @@ if (runSamples) {
 # Stop the clock
 toc <- proc.time() - tic
 
+```
+
+```{r Save results}
+
+resultsFolder <- file.path(projectFolder, project, "results")
+
+if (saveAsBase) {
+  # Create testing folder and results file
+  dir.create(file.path(resultsFolder, "results_base"), 
+             showWarnings = FALSE)
+  resultsFile <- file.path(resultsFolder, "results_base", 
+                           "results_base.rda")
+} else {
+  dir.create(file.path(resultsFolder, paste0("results_", currTime)), 
+             showWarnings = FALSE)
+  resultsFile <- file.path(resultsFolder, paste0("results_", currTime), 
+                           paste0("results_", currTime, ".rda"))
+}
+
 # Append the results to the project file - annoyingly R makes this tricky!
 if (runSamples) {
   save(list = c("bestResults", "paramResults", projectVars), 
-       file = projectFile)
+       file = resultsFile)
 } else {
   save(list = c("bestResults", projectVars), 
-       file = projectFile)
+       file = resultsFile)
 }
 
   
