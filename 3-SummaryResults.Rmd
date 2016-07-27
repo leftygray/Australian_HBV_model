@@ -108,93 +108,117 @@ agePopPlot <- indicatorPlot(plotAgePops, ylabel = "Population size",
 
 # Population prevalence --------------------------------------------------
 
-# Data frame for overall number of people infected by age 
-numInfected <-  popSizes %>%
-  group_by(year, age_group) %>%
-  filter(state %in% c("a", "ch")) %>% 
-  summarise(numinfected = sum(popsize)) %>%
-  ungroup() %>%
-  arrange(age_group) %>%
-  mutate(popsize = popSizesAge$totalpop,
-    prevalence = numinfected / popSizesAge$totalpop)
+totalNumInfected <- popResults(pg, bestResults, paramResults,
+                          states = c("a", "ch"), 
+                          range = TRUE, populations = "all")
 
-# Plot of total number of people infected and overall prevalence
-totalPrev <- numInfected %>%
+ageNumInfected <- popResults(pg, bestResults, paramResults,
+                          states = c("a", "ch"), 
+                          range = TRUE) 
+
+totalInfectedPlot <- indicatorPlot(totalNumInfected, 
+                                   ylabel = "Total number infected",
+                                   xlimits = c(startYear, endYear, 5),
+                                   range = TRUE)
+
+# First sort out level names for plotting
+plotInfectPops <- ageNumInfected
+plotInfectPops$population <- factor(plotInfectPops$population)
+levels(plotInfectPops$population) <- c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45")
+
+popInfectedPlot <- indicatorPlot(plotInfectPops, 
+                                   ylabel = "Number infected",
+                                   xlimits = c(startYear, endYear, 5),
+                                   range = TRUE,
+                                   facetPlot = "population")
+
+# Total prevalance
+tempInfected <- popResults(pg, bestResults, paramResults,
+  states = c("a", "ch"), 
+  range = FALSE, populations = "all") %>% 
+  select(-year)
+
+tempTotal <- popResults(pg, bestResults, paramResults,
+                       populations = "all", states = "all",
+                       range = FALSE) %>% select(-year)
+
+tempPrev <- (tempInfected / tempTotal) %>%
+  mutate(year = totalPop$year) %>%
+  select(year, everything()) %>%
+  tbl_df()
+
+totalPrev <- tempPrev %>%
+  gather("sim", "popsize", 2:(ncol(tempInfected) + 1)) %>%
   group_by(year) %>%
-  summarise(total_infected = sum(numinfected)) %>%
-  mutate(overall_prev = total_infected / totalPop$totalpop)
-             
-totalInfectedPlot <- ggplot(data = totalPrev, 
-                        aes(x = year, y = total_infected)) +
-  geom_line(colour = "blue") +
-  xlab("Year") + ylab("Total number infected") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts
+  summarise(min = min(popsize),
+            max = max(popsize)) %>%
+  ungroup() %>%
+  mutate(best = tempPrev$best) %>%
+  select(year, best, min, max)
 
-totalPrevPlot <- ggplot(data = totalPrev, 
-                        aes(x = year, y = overall_prev)) +
-  geom_line(colour = "blue") +
-  xlab("Year") + ylab("Overall prevalence") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts
+totalPrevPlot <- indicatorPlot(totalPrev, 
+                               ylabel = "Overall prevalence",
+                               xlimits = c(startYear, endYear, 5),
+                               range = TRUE)
 
-# Plot of prevalence in every group - first sort out level names for
-# plotting
-plotPrevPops <- numInfected
-plotPrevPops$age_group <- factor(numInfected$age_group)
-levels(plotPrevPops$age_group) <- c("Age < 4", "Age 5 to 14", 
-                                   "Age 15 to 44", "Age > 45") 
+# Pop prevalence
+tempInfected <- popResults(pg, bestResults, paramResults,
+                          states = c("a", "ch"), 
+                          range = FALSE) %>% select(-year, -population)
 
-popInfectedPlot <- ggplot(data = plotPrevPops, 
-                     aes(x = year, y = numinfected, group = age_group)) +
-  geom_line(colour = "blue") +
-  facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  xlab("Year") + ylab("Population size") +
-  plotOpts + theme(panel.margin = unit(2, "lines"))
+tempTotal <- popResults(pg, bestResults, paramResults, states = "all",
+                       range = FALSE) %>% select(-year, -population)
 
-popPrevPlot <- ggplot(data = plotPrevPops, 
-                     aes(x = year, y = prevalence, group = age_group)) +
-  geom_line(colour = "blue") +
-  facet_wrap(~age_group, ncol = 2, scales = "free_x") + 
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  xlab("Year") + ylab("Population prevalence") +
-  plotOpts + theme(panel.margin = unit(2, "lines"))
+tempPrev <- (tempInfected / tempTotal) %>%
+  mutate(year = popSizesAge$year,
+         population = popSizesAge$population) %>%
+  select(year, population, everything()) %>%
+  tbl_df()
+
+popPrev <- tempPrev %>%
+  gather("sim", "popsize", 3:ncol(tempPrev)) %>%
+  group_by(year, population) %>%
+  summarise(min = min(popsize),
+            max = max(popsize)) %>%
+  ungroup() %>%
+  mutate(best = tempPrev$best) %>%
+  select(year, population, best, min, max)
+
+# First sort out level names for plotting
+plotPrevPops <- popPrev
+plotPrevPops$population <- factor(plotPrevPops$population)
+levels(plotPrevPops$population) <- c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45")
+
+popPrevPlot <- indicatorPlot(popPrev, 
+                             ylabel = "Population prevalence",
+                             xlimits = c(startYear, endYear, 10),
+                             range = TRUE, facetPlot = "population")
+
 
 # Plot of population size in every group- first sort out level names for
 # plotting. Essentially prevalence by age and state
+popSizes <- popResults(pg, bestResults, paramResults, range = TRUE)
+
 plotPops <- popSizes
-plotPops$age_group <- factor(plotPops$age_group)
-levels(plotPops$age_group) <- c("Age < 4", "Age 5 to 14", "Age 15 to 44",
+plotPops$population <- factor(plotPops$population)
+levels(plotPops$population) <- c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")
 
-allPopsPlot <- ggplot(data = plotPops, 
-                      aes(x = year, y = popsize, group = state)) +
-  facet_wrap(~age_group, ncol = 2, scales = "free_x") +
-  geom_line(aes(colour = state)) +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  scale_colour_brewer(name = "Infection state", palette = "Set1",
-                      labels = c("Susceptible", "Acute", "Chronic",
-                                 "Cleared", "Immune")) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  xlab("Year") + ylab("Population size") +
-  plotOpts + theme(legend.position = "right") + 
-  theme(panel.margin = unit(2, "lines"))
+allPopsPlot <- indicatorPlot(plotPops, 
+                             ylabel = "Population size",
+                             xlimits = c(startYear, endYear, 10),
+                             range = TRUE, facetPlot = "population",
+                             groupPlot = "state")
 
 # New infections and incidence -------------------------------------------
 
+
 newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
   mutate(year = pg$pts) %>%
-  select(year, everything()) %>%
+  select(year, everything()) %>% 
+  tbl_df() %>%
   gather("age_group", "infections", 2:(pg$npops+1)) %>%
   mutate(incidence = infections / popSizesAge$totalpop,
          total_pop = popSizesAge$totalpop)
@@ -258,80 +282,56 @@ popIncidencePlot <- ggplot(data = annNewInfections,
   coord_cartesian(xlim = c(startYear, endYear)) +
   plotOpts + theme(legend.position = "right")
   
-# Treatment --------------------------------------------------------------
-popTreatments <- as.data.frame(t(bestResults$newTreatments)) %>%
-  mutate(year = pg$pts) %>%
-  select(year, everything()) %>%
-  gather("age_group", "treatments", 2:(pg$npops+1)) 
+# Treatment ------------------------------------------------------------ 
 
-annPopTreatments <- yearDf(popTreatments, "treatments", pg$years,
-                           pg$npops, pg$timestep)
+totalTreatments <- indicatorResults(pg, bestResults, paramResults,
+                                  "newTreatments", range = TRUE,
+                                  populations = "all", 
+                                  annual = "sum")
 
-totalTreatments <- popTreatments %>%
-  group_by(year) %>%
-  summarise(treatments = sum(treatments))
+popTreatments <- indicatorResults(pg, bestResults, paramResults,
+                                  "newTreatments", range = TRUE,
+                                  annual = "sum")
 
-annTotalTreatments <- yearDf(totalTreatments, "treatments", pg$years,
-                             1, pg$timestep)
+totalTreatmentPlot <- indicatorPlot(totalTreatments, 
+  ylabel = "Number initiated treatment", 
+  range = TRUE, xlimits = c(startYear, endYear, 5))
 
-totalTreatmentPlot <- ggplot(data = annTotalTreatments, 
-    aes(x = year, y = treatments)) +
-  geom_line(colour = "blue") +
-  xlab("Year") + ylab("Number initiated treatment") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts
-
-popTreatmentPlot <- ggplot(data = annPopTreatments, 
-  aes(x = year, y = treatments, group = age_group)) + 
-  geom_line(aes(color = age_group)) + 
-  xlab("year") + ylab("Number initiated treatment") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
+popTreatmentPlot <- indicatorPlot(popTreatments, 
+  ylabel = "Number initiated treatment", 
+  range = TRUE, xlimits = c(startYear, endYear, 5),
+  groupPlot = "population") +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts + theme(legend.position = "right")
+  scale_fill_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
+                                "Age > 45"))
 
 # HBV deaths -------------------------------------------------------------
-popDeaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
-  mutate(year = pg$pts) %>%
-  select(year, everything()) %>%
-  gather("age_group", "deaths", 2:(pg$npops+1)) 
+totalDeaths <- indicatorResults(pg, bestResults, paramResults,
+                                  "newHBVdeaths", range = TRUE,
+                                  populations = "all", 
+                                  annual = "sum")
 
-annPopDeaths <- yearDf(popDeaths, "deaths", pg$years,
-                       pg$npops, pg$timestep)
+popDeaths <- indicatorResults(pg, bestResults, paramResults,
+                                  "newHBVdeaths", range = TRUE,
+                                  annual = "sum")
 
-totalDeaths <- popDeaths %>%
-  group_by(year) %>%
-  summarise(deaths = sum(deaths))
+totalDeathsPlot <- indicatorPlot(totalDeaths, 
+  ylabel = "Number of deaths", 
+  range = TRUE, xlimits = c(startYear, endYear, 5))
 
-annTotalDeaths <- yearDf(totalDeaths, "deaths", pg$years,
-                         1, pg$timestep)
-
-
-totalDeathsPlot <- ggplot(data = annTotalDeaths, 
-    aes(x = year, y = deaths)) +
-  geom_line(colour = "blue") +
-  xlab("Year") + ylab("Number of deaths") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts
-
-popDeathsPlot <- ggplot(data = annPopDeaths, 
-  aes(x = year, y = deaths, group = age_group)) + 
-  geom_line(aes(color = age_group)) + 
-  xlab("year") + ylab("Number of deaths") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
+popTreatmentPlot <- indicatorPlot(popDeaths, 
+  ylabel = "Number of deaths", 
+  range = TRUE, xlimits = c(startYear, endYear, 5),
+  groupPlot = "population") +
   scale_colour_brewer(name = "Age Group", palette = "Set1",
                       labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
                                 "Age > 45")) +
-  plotOpts + theme(legend.position = "right")
+  scale_fill_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
+                                "Age > 45"))
 
 # Vaccinations -----------------------------------------------------------
 
