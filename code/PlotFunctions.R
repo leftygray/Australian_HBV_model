@@ -78,6 +78,19 @@ yearDf <- function(df, sumVar, years, npops, timestep,
 
 # Organize results -------------------------------------------------------
 
+FactorPop <- function(df, factorLabels) {
+  df$population <- factor(df$population)
+  levels(df$population) <- factorLabels
+  
+  return(df)
+}
+
+MidYearDf <- function(df, timstep, year, npops) {
+  yearFrame <- df[seq(1, nrow(df), 1 / timestep), ]
+  yearFrame <- df[MidyearIndex(nrow(df), timestep), ]
+  yearFrame$year <- rep(head(years, -1), npops)
+}
+
 popResults <- function(pg, bestResults, paramResults,
                        populations = NULL, states = NULL,
                        range = FALSE) {
