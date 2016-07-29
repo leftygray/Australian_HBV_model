@@ -125,7 +125,7 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   # Create calibration plot ----------------------------------------------
  
   # Plot in a separate figure
-  windows(width = 35, height=30, xpos = 200) # Dimesnions big enough to 
+  windows(width = 35, height=30, xpos = 200) # Dimensions big enough to 
                                              # maximize
   # Total population size 
   popSizes <- as.data.frame.table(bestResults$allPops)

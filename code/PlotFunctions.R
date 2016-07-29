@@ -85,6 +85,13 @@ FactorPop <- function(df, factorLabels) {
   return(df)
 }
 
+FactorState <- function(df, factorLabels) {
+  df$state <- factor(df$state)
+  levels(df$state) <- factorLabels
+  
+  return(df)
+}
+
 MidYearDf <- function(df, timstep, year, npops) {
   yearFrame <- df[seq(1, nrow(df), 1 / timestep), ]
   yearFrame <- df[MidyearIndex(nrow(df), timestep), ]

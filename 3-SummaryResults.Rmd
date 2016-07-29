@@ -84,6 +84,7 @@ load(resultsFile)
 ```{r Generate plots}
 
 popLabels <- c("Age < 4", "Age 5 to 14", "Age 15 to 44", "Age > 45")
+stateLabels <- c("Susceptible", "Acute", "Chronic", "cleared", "immune")
 
 # Population sizes ------------------------------------------------------
 totalPop <- popResults(pg, bestResults, paramResults,
@@ -97,13 +98,13 @@ totalPopPlot <- indicatorPlot(totalPop, ylabel = "Population size",
 # Plot of population size in every group 
 popSizesAge <- popResults(pg, bestResults, paramResults,
                           states = "all", range = TRUE) %>%
-  factorPop(popLabels)
+  FactorPop(popLabels)
 
 agePopPlot <- indicatorPlot(popSizesAge, ylabel = "Population size",
                               xlimits = c(startYear, endYear, 5),
                             facetPlot = "population", range = TRUE)
 
-# Population prevalence --------------------------------------------------
+# Prevalence --------------------------------------------------
 
 totalNumInfected <- popResults(pg, bestResults, paramResults,
                           states = c("a", "ch"), 
@@ -112,7 +113,7 @@ totalNumInfected <- popResults(pg, bestResults, paramResults,
 ageNumInfected <- popResults(pg, bestResults, paramResults,
                           states = c("a", "ch"), 
                           range = TRUE) %>%
-  factorPop(popLabels)
+  FactorPop(popLabels)
 
 totalInfectedPlot <- indicatorPlot(totalNumInfected, 
                                    ylabel = "Total number infected",
@@ -135,7 +136,7 @@ tempTotal <- popResults(pg, bestResults, paramResults,
                        populations = "all", states = "all",
                        range = FALSE) %>% select(-year)
 
-tempPrev <- (tempInfected / tempTotal) %>%
+tempPrev <- (100 * tempInfected / tempTotal) %>%
   mutate(year = totalPop$year) %>%
   select(year, everything()) %>%
   tbl_df()
@@ -150,7 +151,7 @@ totalPrev <- tempPrev %>%
   select(year, best, min, max)
 
 totalPrevPlot <- indicatorPlot(totalPrev, 
-                               ylabel = "Overall prevalence",
+                               ylabel = "Overall prevalence (%)",
                                xlimits = c(startYear, endYear, 5),
                                range = TRUE)
 
@@ -162,7 +163,7 @@ tempInfected <- popResults(pg, bestResults, paramResults,
 tempTotal <- popResults(pg, bestResults, paramResults, states = "all",
                        range = FALSE) %>% select(-year, -population)
 
-tempPrev <- (tempInfected / tempTotal) %>%
+tempPrev <- (100 * tempInfected / tempTotal) %>%
   mutate(year = popSizesAge$year,
          population = popSizesAge$population) %>%
   select(year, population, everything()) %>%
@@ -176,10 +177,10 @@ popPrev <- tempPrev %>%
   ungroup() %>%
   mutate(best = tempPrev$best) %>%
   select(year, population, best, min, max) %>%
-  factorPop(popLabels)
+  FactorPop(popLabels)
 
 popPrevPlot <- indicatorPlot(popPrev, 
-                             ylabel = "Population prevalence",
+                             ylabel = "Population prevalence (%)",
                              xlimits = c(startYear, endYear, 10),
                              range = TRUE, facetPlot = "population")
 
@@ -187,7 +188,8 @@ popPrevPlot <- indicatorPlot(popPrev,
 # Plot of population size in every group- first sort out level names for
 # plotting. Essentially prevalence by age and state
 plotPops <- popResults(pg, bestResults, paramResults, range = TRUE) %>%
-  factorPop(popLabels)
+  FactorPop(popLabels) %>%
+  FactorState(stateLabels)
 
 allPopsPlot <- indicatorPlot(plotPops, 
                              ylabel = "Population size",
@@ -195,7 +197,13 @@ allPopsPlot <- indicatorPlot(plotPops,
                              range = TRUE, facetPlot = "population",
                              groupPlot = "state")
 
-# New infections and incidence -------------------------------------------
+allStatesPlot <- indicatorPlot(plotPops, 
+                             ylabel = "Population size",
+                             xlimits = c(startYear, endYear, 10),
+                             range = TRUE, facetPlot = "state",
+                             groupPlot = "population")
+
+# New infections -------------------------------------------
 
 # Annual number of new infections
 totalInfections <- indicatorResults(pg, bestResults, paramResults,
@@ -206,14 +214,14 @@ totalInfections <- indicatorResults(pg, bestResults, paramResults,
 popInfections <- indicatorResults(pg, bestResults, paramResults,
                                   "newInfections", range = TRUE,
                                   annual = "sum") %>%
-  factorPop(popLabels)
+  FactorPop(popLabels)
 
 totalNewInfectionsPlot <- indicatorPlot(totalInfections, 
                                    ylabel = "New infections",
                                    xlimits = c(startYear, endYear, 5),
                                    range = TRUE)
 
-popNewInfectionsPlot <- indicatorPlot(plotNewInfectsPops, 
+popNewInfectionsPlot <- indicatorPlot(popInfections, 
                                    ylabel = "New infections",
                                    xlimits = c(startYear, endYear, 5),
                                    range = TRUE,
@@ -245,7 +253,7 @@ totalCumInfectionsPlot <- indicatorPlot(totalCumInfections,
 tempPopInfections <- indicatorResults(pg, bestResults, paramResults,
                                   "newInfections", range = FALSE,
                                   annual = "sum") %>%
-  factorPop(popLabels)
+  FactorPop(popLabels)
 
 bestEstimate <- tempPopInfections %>%
   select(year, population, best) %>%
@@ -273,10 +281,10 @@ popCumInfectionsPlot <- indicatorPlot(popCumInfections,
                                    range = TRUE,
                                    facetPlot = "population")
 
-# Incidence
+# Incidence --------------------------------------------------------------
 
 tempTotalInfections <- select(tempTotalInfections, -year)
-tempPopInfections <- select(tempPopInfections, -year, -population)
+tempPopInfections <- select(tempPopInfections, -year)
 
 tempTotalPop <- popResults(pg, bestResults, paramResults,
                        populations = "all", states = "all",
@@ -286,13 +294,20 @@ tempTotalPop <- tempTotalPop[MidyearIndex(nrow(tempTotalPop),
 
 
 tempPopPop <- popResults(pg, bestResults, paramResults, states = "all",
-                       range = FALSE) %>% select(-year, -population)
-tempPopPop <- tempTotalPop[MidyearIndex(nrow(tempPopPop),
+                       range = FALSE) %>% 
+  select(-year) %>%
+  arrange(population) %>%
+  FactorPop(popLabels)
+tempPopPop <- tempPopPop[MidyearIndex(nrow(tempPopPop),
                             pg$timestep), ]
+
+savePops <- tempPopPop$population
+tempPopPop <- select(tempPopPop, -population)
 
 
 #Calculate incidence per 100,000
-tempTotalInc <- (1e5 * tempTotalInfections / tempTotalPop) %>%
+tempTotalInc <- (1e5 * tempTotalInfections /
+                   tempTotalPop) %>%
   mutate(year = head(pg$years, -1)) %>%
   select(year, everything()) %>%
   tbl_df()
@@ -311,36 +326,30 @@ totalIncidencePlot <- indicatorPlot(totalInc,
                                xlimits = c(startYear, endYear, 5),
                                range = TRUE)
 
-#####
-
-tempPopInc <- (1e5 * tempPopInfections / tempPopPop) %>%
-  mutate(year = head(pg$years, -1)) %>%
+tempPopInc <- (1e5 * select(tempPopInfections, -population) / 
+                 tempPopPop) %>%
+  mutate(year = rep(head(pg$years, -1), pg$npops)) %>%
   select(year, everything()) %>%
-  tbl_df()
+  tbl_df() %>%
+  mutate(population = savePops) %>%
+  select(year, population, everything())
 
-totalInc <- tempTotalInc %>%
-  gather("sim", "incidence", 2:ncol(tempTotalInc)) %>%
-  group_by(year) %>%
+popInc <- tempPopInc %>%
+  gather("sim", "incidence", 3:ncol(tempPopInc)) %>%
+  group_by(year, population) %>%
   summarise(min = min(incidence),
             max = max(incidence)) %>%
   ungroup() %>%
-  mutate(best = tempTotalInc$best) %>%
-  select(year, best, min, max)
+  arrange(population) %>%
+  mutate(best = tempPopInc$best) %>%
+  select(year, population, best, min, max)
 
-# By age group
+popIncidencePlot <- indicatorPlot(popInc, 
+                               ylabel = "Incidence per 100,000",
+                               xlimits = c(startYear, endYear, 5),
+                               facetPlot = "population", 
+                               range = TRUE)
 
-popIncidencePlot <- ggplot(data = annNewInfections, 
-  aes(x = year, y = incidence * 1e5, group = age_group)) + 
-  geom_line(aes(color = age_group)) + 
-  xlab("Year") + ylab("Incidence per 100,000") +
-  scale_x_continuous(breaks = seq(startYear, endYear, 
-                                  by = 5)) +
-  scale_colour_brewer(name = "Age Group", palette = "Set1",
-                      labels = c("Age < 4", "Age 5 to 14", "Age 15 to 44",
-                                "Age > 45")) +
-  coord_cartesian(xlim = c(startYear, endYear)) +
-  plotOpts + theme(legend.position = "right")
-  
 # Treatment ------------------------------------------------------------ 
 
 totalTreatments <- indicatorResults(pg, bestResults, paramResults,
@@ -406,9 +415,13 @@ if (displayPlots) {
   popInfectedPlot
   popPrevPlot
   allPopsPlot
+  allStatesPlot
   
   totalNewInfectionsPlot
   popNewInfectionsPlot
+  totalCumInfectionsPlot
+  popCumInfectionsPlot
+  
   totalIncidencePlot
   popIncidencePlot
   
@@ -435,10 +448,15 @@ if (savePlots) {
   SaveFigure(figureFolder, "age_group_infected", popInfectedPlot)
   SaveFigure(figureFolder, "age_group_prevalence", popPrevPlot)
   SaveFigure(figureFolder, "all_pops_states", allPopsPlot)
+  SaveFigure(figureFolder, "all_states_pops", allStatesPlot)
   
   SaveFigure(figureFolder, "new_infections", totalNewInfectionsPlot)
   SaveFigure(figureFolder, "age_group_new_infections",
              popNewInfectionsPlot)
+  SaveFigure(figureFolder, "cumulative_infections", totalCumInfectionsPlot)
+  SaveFigure(figureFolder, "age_group_cumulative_infections",
+             popCumInfectionsPlot)
+  
   SaveFigure(figureFolder, "total_incidence", totalIncidencePlot)
   SaveFigure(figureFolder, "age_group_incidence", popIncidencePlot)
   
@@ -501,59 +519,80 @@ popPrevPlot
 allPopsPlot
 ```
 
+**Figure 8** - Number of people in each stage of infection by infection
+state.
+
+```{r Insert figure 8, include = TRUE}
+allStatesPlot
+```
 
 ### New infections and incidence
 
-**Figure 8** - Total number of new HBV infections.
+**Figure 9** - Total number of new HBV infections.
 
-```{r Insert figure 8, include = TRUE}
+```{r Insert figure 9, include = TRUE}
 totalNewInfectionsPlot
 ```
 
-**Figure 9** - Number of new HBV infections by age group.
+**Figure 10** - Number of new HBV infections by age group.
 
-```{r Insert figure 9, include = TRUE}
+```{r Insert figure 10, include = TRUE}
 popNewInfectionsPlot
 ```
 
-**Figure 10** - Overall incidence per 100,000 people.
+**Figure 11** - Total number of new HBV infections.
 
-```{r Insert figure 10, include = TRUE}
+```{r Insert figure 11, include = TRUE}
+totalCumInfectionsPlot
+```
+
+**Figure 12** - Number of new HBV infections by age group.
+
+```{r Insert figure 12, include = TRUE}
+popCumInfectionsPlot
+```
+
+
+### Incidence
+
+**Figure 13** - Overall incidence per 100,000 people.
+
+```{r Insert figure 13, include = TRUE}
 totalIncidencePlot
 ```
 
-**Figure 11** - Incidence per 100,000 people by age group.
+**Figure 14* - Incidence per 100,000 people by age group.
 
-```{r Insert figure 11, include = TRUE}
+```{r Insert figure 14, include = TRUE}
 popIncidencePlot
 ```
 
 ### HBV Treatment
 
-**Figure 12** - Total number of people initiating treatment per year.
+**Figure 15** - Total number of people initiating treatment per year.
 
-```{r Insert figure 12, include = TRUE}
+```{r Insert figure 15, include = TRUE}
 totalTreatmentPlot
 ```
 
-**Figure 13** - Number of people initiating treatment per year by age
+**Figure 16** - Number of people initiating treatment per year by age
 group.
 
-```{r Insert figure 13, include = TRUE}
+```{r Insert figure 16, include = TRUE}
 popTreatmentPlot
 ```
 
 ### Deaths
 
-**Figure 14** - Total number of deaths per year.
+**Figure 17** - Total number of deaths per year.
 
-```{r Insert figure 14, include = TRUE}
+```{r Insert figure 17, include = TRUE}
 totalDeathsPlot
 ```
 
-**Figure 15** - Number of deaths per year by age group.
+**Figure 18** - Number of deaths per year by age group.
 
-```{r Insert figure 15, include = TRUE}
+```{r Insert figure 18, include = TRUE}
 popDeathsPlot
 ```
 
