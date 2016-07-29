@@ -57,7 +57,7 @@ project <- "Australia_HBV_estimates-BM"
 
 # Plotting options
 displayPlots <- TRUE
-savePlots <- FALSE
+savePlots <- TRUE
 
 startYear <- 2000
 endYear <- 2030
@@ -390,7 +390,7 @@ totalDeathsPlot <- indicatorPlot(totalDeaths,
   ylabel = "Number of deaths", 
   range = TRUE, xlimits = c(startYear, endYear, 5))
 
-popTreatmentPlot <- indicatorPlot(popDeaths, 
+popDeathsPlot <- indicatorPlot(popDeaths, 
   ylabel = "Number of deaths", 
   range = TRUE, xlimits = c(startYear, endYear, 5),
   groupPlot = "population") +

@@ -98,7 +98,7 @@ MidYearDf <- function(df, timstep, year, npops) {
   yearFrame$year <- rep(head(years, -1), npops)
 }
 
-popResults <- function(pg, bestResults, paramResults,
+popResults <- function(pg, bestResults, paramResults = NULL,
                        populations = NULL, states = NULL,
                        range = FALSE) {
   # This function organizes and merges the population size results
@@ -119,16 +119,17 @@ popResults <- function(pg, bestResults, paramResults,
   # Now append each param set results
   popSizes <- bestPopSizes
   
-  for (set in 1:pg$parameter_samples) {
-    paramSet <- paste0("paramSet", toString(set))
-    setPopSizes <- as.data.frame.table(paramResults[[paramSet]]$allPops)
-    colnames(setPopSizes) <- c("population", "state", "time_step",
-                               "popsize") 
-    setPopSizes <- arrange(setPopSizes, population)
-    popSizes[, paste0("set", toString(set))] <-  setPopSizes$popsize
-    
+  if (!is.null(paramResults)) {
+    for (set in 1:pg$parameter_samples) {
+      paramSet <- paste0("paramSet", toString(set))
+      setPopSizes <- as.data.frame.table(paramResults[[paramSet]]$allPops)
+      colnames(setPopSizes) <- c("population", "state", "time_step",
+                                 "popsize") 
+      setPopSizes <- arrange(setPopSizes, population)
+      popSizes[, paste0("set", toString(set))] <-  setPopSizes$popsize
+      
+    }
   }
-
   # Extract the subresults we want
   if (!is.null(populations) || !is.null(states)) {
     if (length(populations) == 1 && populations == "all") {
@@ -191,56 +192,58 @@ popResults <- function(pg, bestResults, paramResults,
   popSizes <- ungroup(popSizes)
   bestValues <- popSizes$best
   
-  if (range) {
-    bestcol <- which(colnames(popSizes) == "best")
-    
-    popSizes <- gather(popSizes, "sim", "popsize", 
-                       bestcol:ncol(popSizes)) 
-    
-    if (is.null(populations) && is.null(states)) {
-      popSizes <- group_by(popSizes, year, population, state)
-    } else if (is.null(populations)) {
-      popSizes <- group_by(popSizes, year, population)
-    } else if (is.null(states)) {
-      popSizes <- group_by(popSizes, year, state)
-    } else {
-      popSizes <- group_by(popSizes, year)
-    }
-    
-    popSizes <- popSizes %>%
-      summarise(min = min(popsize),
-                max = max(popsize)) %>%
-      ungroup() 
-    
-    if (is.null(populations) && is.null(states)) {
+  if (!is.null(paramResults)) {
+    if (range) {
+      bestcol <- which(colnames(popSizes) == "best")
+      
+      popSizes <- gather(popSizes, "sim", "popsize", 
+                         bestcol:ncol(popSizes)) 
+      
+      if (is.null(populations) && is.null(states)) {
+        popSizes <- group_by(popSizes, year, population, state)
+      } else if (is.null(populations)) {
+        popSizes <- group_by(popSizes, year, population)
+      } else if (is.null(states)) {
+        popSizes <- group_by(popSizes, year, state)
+      } else {
+        popSizes <- group_by(popSizes, year)
+      }
+      
       popSizes <- popSizes %>%
-        arrange(population) %>%
-        mutate(best = bestValues)
-    } else {
-      popSizes <- popSizes %>%
-        mutate(best = bestValues)
-    }
-    
-    if (is.null(populations) && is.null(states)) {
-      popSizes <- select(popSizes, year, population, state,
-                         best, everything())
-    } else if (is.null(populations)) {
-      popSizes <- select(popSizes, year, population, best, everything())
-    } else if (is.null(states)) {
-      popSizes <- select(popSizes, year, state, best, everything())
-    } else {
-      popSizes <- select(popSizes, year, best, everything())
+        summarise(min = min(popsize),
+                  max = max(popsize)) %>%
+        ungroup() 
+      
+      if (is.null(populations) && is.null(states)) {
+        popSizes <- popSizes %>%
+          arrange(population) %>%
+          mutate(best = bestValues)
+      } else {
+        popSizes <- popSizes %>%
+          mutate(best = bestValues)
+      }
+      
+      if (is.null(populations) && is.null(states)) {
+        popSizes <- select(popSizes, year, population, state,
+                           best, everything())
+      } else if (is.null(populations)) {
+        popSizes <- select(popSizes, year, population, best, everything())
+      } else if (is.null(states)) {
+        popSizes <- select(popSizes, year, state, best, everything())
+      } else {
+        popSizes <- select(popSizes, year, best, everything())
+      }
     }
   }
-  
   
   # Return the final population data frame
   return(tbl_df(popSizes))
 }
 
 
-indicatorResults<- function(pg, bestResults, paramResults,
-                            indicator, populations = NULL, 
+indicatorResults<- function(pg, bestResults, indicator,  
+                            paramResults = NULL,
+                            populations = NULL, 
                             range = FALSE, 
                             annual = NULL) {
   # This function organizes and merges the specific
@@ -258,23 +261,21 @@ indicatorResults<- function(pg, bestResults, paramResults,
   # Now append each param set results
   indicatorEstimates <- bestEstimates
   
-  for (set in 1:pg$parameter_samples) {
-    paramSet <- paste0("paramSet", toString(set))
-    setIndicator <- 
-      tbl_df(as.data.frame(t(paramResults[[paramSet]][[indicator]]))) %>%
-      mutate(year = pg$pts) %>%
-      select(year, everything()) %>%
-      gather_("population", indicator, pg$population_names)
-    
-    # setIndicator <- arrange(setIndicator, population)
-    indicatorEstimates[, paste0("set", toString(set))] <-  
-      setIndicator[, indicator]
+  if (!is.null(paramResults)) {
+    for (set in 1:pg$parameter_samples) {
+      paramSet <- paste0("paramSet", toString(set))
+      setIndicator <- 
+        tbl_df(as.data.frame(t(paramResults[[paramSet]][[indicator]]))) %>%
+        mutate(year = pg$pts) %>%
+        select(year, everything()) %>%
+        gather_("population", indicator, pg$population_names)
+      
+      # setIndicator <- arrange(setIndicator, population)
+      indicatorEstimates[, paste0("set", toString(set))] <-  
+        setIndicator[, indicator]
+    }
   }
   
-  # Convert population into a factor and order the levels
-  # indicatorEstimates$population <- factor(indicatorEstimates$population,
-  #                                         levels = c("age0to4", "age5to14",
-  #                                                    "age15to44", "age45"))
   
   # Extract the subresults we want
   if (length(populations) == 1 && populations == "all") {
@@ -344,29 +345,31 @@ indicatorResults<- function(pg, bestResults, paramResults,
   # Store best values for later
   bestValues <- indicatorEstimates$best
   
-  if (range) {
-   
-    indicatorEstimates <- gather(indicatorEstimates, "sim", "estimate", 
-                       bestcol:ncol(indicatorEstimates)) 
-    
-    if (is.null(populations)) {
-      indicatorEstimates <- indicatorEstimates %>%
-        group_by(year, population) %>%
-        summarise(min = min(estimate),
-                  max = max(estimate)) %>%
-        ungroup() %>%
-        arrange(population) %>%
-        mutate(best = bestValues) %>%
-        select(year, population, 
-               best, everything())
-    } else {
-      indicatorEstimates <- indicatorEstimates %>%
-        group_by(year) %>%
-        summarise(min = min(estimate),
-                  max = max(estimate)) %>%
-        ungroup() %>%
-        mutate(best = bestValues) %>%
-        select(year, best, everything())
+  if (!is.null(paramResults)) {
+    if (range) {
+      
+      indicatorEstimates <- gather(indicatorEstimates, "sim", "estimate", 
+                                   bestcol:ncol(indicatorEstimates)) 
+      
+      if (is.null(populations)) {
+        indicatorEstimates <- indicatorEstimates %>%
+          group_by(year, population) %>%
+          summarise(min = min(estimate),
+                    max = max(estimate)) %>%
+          ungroup() %>%
+          arrange(population) %>%
+          mutate(best = bestValues) %>%
+          select(year, population, 
+                 best, everything())
+      } else {
+        indicatorEstimates <- indicatorEstimates %>%
+          group_by(year) %>%
+          summarise(min = min(estimate),
+                    max = max(estimate)) %>%
+          ungroup() %>%
+          mutate(best = bestValues) %>%
+          select(year, best, everything())
+      }
     }
   }
   
@@ -406,7 +409,8 @@ indicatorPlot <- function(data, ylabel = NULL, range = TRUE,
   # Create the plot
   if (range) {
     if (plotGroups) {
-      plot <- ggplot(data = data, aes_string(x = "year", group = groupPlot)) +
+      plot <- ggplot(data = data, aes_string(x = "year", 
+                                             group = groupPlot)) +
         geom_ribbon(aes_string(ymin = "min", ymax = "max", 
                                fill = groupPlot), alpha = 0.4) +
         geom_line(aes_string(y = "best", colour = groupPlot)) +

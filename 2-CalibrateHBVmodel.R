@@ -127,218 +127,301 @@ CalibrateHIVmodel <- function(project, resource = FALSE) {
   # Plot in a separate figure
   windows(width = 35, height=30, xpos = 200) # Dimensions big enough to 
                                              # maximize
-  # Total population size 
-  popSizes <- as.data.frame.table(bestResults$allPops)
-  colnames(popSizes) <- c("age_group", "state", "time_step", "popsize") 
-  popSizes$time_step <- as.numeric(popSizes$time_step)
+  # Population sizes
+  totalPop <- popResults(pg, bestResults,
+                         populations = "all", states = "all") 
   
-  popSizes <- popSizes %>% # add pts as well
-    mutate(year = pg$start_year + (time_step-1) * pg$timestep) 
+  totalPopPlot <- indicatorPlot(totalPop, ylabel = "Population size",
+                                range = FALSE, 
+                                xlimits = c(pg$start_year, 
+                                            pg$end_year, 20)) +
+    ggtitle("Overall population")
   
-  totalPop <- popSizes %>%
-    group_by(year) %>%
-    summarise(totalpop = sum(popsize)) 
   
-  totalPopPlot <- ggplot(data = totalPop, aes(x = year, y = totalpop)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("Population size") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 20)) + plotOpts +
-    ggtitle("Total population size")
+  # Plot of population size in every group 
+  popSizesAge <- popResults(pg, bestResults,
+                            states = "all") %>%
+    FactorPop(popLabels)
   
-  # Population size by age group
-  popSizesAge <- popSizes %>%
-    group_by(year, age_group) %>%
-    summarise(totalpop = sum(popsize)) %>%
-    ungroup() %>%
-    arrange(age_group)
+  agePopPlot <- indicatorPlot(popSizesAge, ylabel = "Population size",
+                              xlimits = c(pg$start_year, 
+                                          pg$end_year, 20),
+                              range = FALSE, 
+                              groupPlot = "population") +
+    ggtitle("Population by age")
   
-  agePopPlot <- ggplot(data = popSizesAge, 
-                       aes(x = year, y = totalpop, group = age_group)) +
-    geom_line(aes(colour = age_group)) + 
-    scale_colour_brewer(name = "Age Group", palette = "Set1") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 50)) +
-    xlab("Year") + ylab("Population size") +
-    plotOpts + theme(legend.position = "right") + 
-    ggtitle("Age group population size")
+  # Prevalence 
+  totalNumInfected <- popResults(pg, bestResults,
+                                 states = c("a", "ch"), 
+                                 populations = "all")
   
-  # Prevalence
-  numInfected <-  popSizes %>%
-    group_by(year, age_group) %>%
-    filter(state %in% c("a", "ch")) %>% 
-    summarise(numinfected = sum(popsize)) %>%
-    ungroup() %>%
-    arrange(age_group) %>%
-    mutate(popsize = popSizesAge$totalpop,
-           prevalence = numinfected / popSizesAge$totalpop)
+  ageNumInfected <- popResults(pg, bestResults, 
+                               states = c("a", "ch")) %>%
+    FactorPop(popLabels)
   
-  totalPrev <- numInfected %>%
-    group_by(year) %>%
-    summarise(total_infected = sum(numinfected)) %>%
-    mutate(overall_prev = total_infected / totalPop$totalpop)
+  totalInfectedPlot <- indicatorPlot(totalNumInfected, 
+                                     ylabel = "Total number infected",
+                                     range = FALSE, 
+                                     xlimits = c(pg$start_year, 
+                                                 pg$end_year, 20)) +
+    ggtitle("Overall number infected")
   
-  totalPrevPlot <- ggplot(data = totalPrev, 
-                          aes(x = year, y = 100 * overall_prev)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("Prevalence (%)") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + 
+  popInfectedPlot <- indicatorPlot(ageNumInfected, 
+                                   ylabel = "Number infected",
+                                   range = FALSE, 
+                                   xlimits = c(pg$start_year, 
+                                               pg$end_year, 20),
+                                   groupPlot = "population") +
+    ggtitle("Infected by population")
+  
+  # Total prevalance
+  tempInfected <- popResults(pg, bestResults,
+                             states = c("a", "ch"), 
+                             range = FALSE, populations = "all") %>% 
+    select(-year)
+  
+  tempTotal <- popResults(pg, bestResults, 
+                          populations = "all", states = "all",
+                          range = FALSE) %>% select(-year)
+  
+  tempPrev <- data.frame(year = totalPop$year, 
+    best = (100 * tempInfected / tempTotal)) %>%
+    tbl_df()
+  
+  totalPrevPlot <- indicatorPlot(tempPrev, 
+                                 ylabel = "Overall prevalence (%)",
+                                 range = FALSE, 
+                                 xlimits = c(pg$start_year, 
+                                             pg$end_year, 20)) +
     ggtitle("Overall prevalence")
   
-  popPrevPlot <- ggplot(data = numInfected, 
-      aes(x = year, y = 100 * prevalence, group = age_group)) +
-    geom_line(aes(colour = age_group)) +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 50)) +
-    xlab("Year") + ylab("Prevalence (%)") +
-    plotOpts + theme(panel.margin = unit(2, "lines")) + 
-    theme(legend.position = "right") +
-    ggtitle("Population prevalence")
+  # Pop prevalence
+  tempInfected <- popResults(pg, bestResults,
+                             states = c("a", "ch"),
+                             range = FALSE) %>% select(-year, -population)
   
-  # New Infections
-  newInfections <- as.data.frame(t(bestResults$newInfections)) %>%
-    mutate(year = pg$pts) %>%
-    select(year, everything()) %>%
-    gather("age_group", "infections", 2:(pg$npops+1)) %>%
-    mutate(incidence = infections / popSizesAge$totalpop,
-           total_pop = popSizesAge$totalpop)
+  tempTotal <- popResults(pg, bestResults,
+                          states = "all",
+                          range = FALSE) %>% select(-year, -population)
   
-  annNewInfections <- yearDf(newInfections, "infections", pg$years,
-                             pg$npops, pg$timestep, midVar = "total_pop",
-                             divideVar = "incidence")
+  tempPrev <- data.frame(year = popSizesAge$year, 
+                         population = popSizesAge$population,
+                         best = (100 * tempInfected / tempTotal)) %>%
+    tbl_df()
   
-  totalInfections <- newInfections %>%
+  popPrevPlot <- indicatorPlot(tempPrev, 
+                               ylabel = "Population prevalence (%)",
+                               xlimits = c(pg$start_year, 
+                                           pg$end_year, 20),
+                               range = FALSE, 
+                               groupPlot = "population") +
+    ggtitle("Prevalence by population")
+  
+  # New infections 
+  
+  # Annual number of new infections
+  totalInfections <- indicatorResults(pg, bestResults,
+                                      "newInfections",
+                                      populations = "all", 
+                                      annual = "sum")
+  
+  popInfections <- indicatorResults(pg, bestResults, 
+                                    "newInfections",
+                                    annual = "sum") %>%
+    FactorPop(popLabels)
+  
+  totalNewInfectionsPlot <- indicatorPlot(totalInfections, 
+                                     ylabel = "New infections",
+                                     range = FALSE, 
+                                     xlimits = c(pg$start_year, 
+                                                 pg$end_year, 20)) +
+    ggtitle("Overall new infections")
+  
+  popNewInfectionsPlot <- indicatorPlot(popInfections, 
+                                        ylabel = "New infections",
+                                        xlimits = c(pg$start_year, 
+                                                    pg$end_year, 20),
+                                        range = FALSE, 
+                                        groupPlot = "population") +
+    ggtitle("Overall new infections")
+  
+  # Cumulative incidence plots
+  tempTotalInfections <- indicatorResults(pg, bestResults,
+                                          "newInfections",
+                                          populations = "all", 
+                                          annual = "sum") 
+  
+  totalCumInfections <- tempTotalInfections %>%
+    mutate(best = cumsum(best)) 
+  
+  totalCumInfectionsPlot <- indicatorPlot(totalCumInfections, 
+                                      ylabel = "Number of infections",
+                                      range = FALSE, 
+                                      xlimits = c(pg$start_year, 
+                                                  pg$end_year, 20)) +
+    ggtitle("Overall cumulative infections")
+  
+  tempPopInfections <- indicatorResults(pg, bestResults,
+                                        "newInfections", 
+                                        annual = "sum") %>%
+    FactorPop(popLabels)
+  
+  popCumInfections <- tempPopInfections %>%
+    group_by(population) %>%
+    mutate(best = cumsum(best)) 
+  
+  popCumInfectionsPlot <- indicatorPlot(popCumInfections, 
+                                        ylabel = "Number of infections",
+                                        range = FALSE, 
+                                        xlimits = c(pg$start_year, 
+                                                    pg$end_year, 20),
+                                        groupPlot = "population") +
+    ggtitle("Cumulative infections by  population")
+  
+  # Incidence 
+  
+  tempTotalInfections <- select(tempTotalInfections, -year)
+  tempPopInfections <- select(tempPopInfections, -year)
+  
+  tempTotalPop <- popResults(pg, bestResults,
+                             populations = "all", states = "all",
+                             range = FALSE) %>% select(-year)
+  tempTotalPop <- tempTotalPop[MidyearIndex(nrow(tempTotalPop),
+                                            pg$timestep), ]
+  
+  
+  tempPopPop <- popResults(pg, bestResults, states = "all",
+                           range = FALSE) %>% 
+    select(-year) %>%
+    arrange(population) %>%
+    FactorPop(popLabels)
+  tempPopPop <- tempPopPop[MidyearIndex(nrow(tempPopPop),
+                                        pg$timestep), ]
+  
+  savePops <- tempPopPop$population
+  tempPopPop <- select(tempPopPop, -population)
+  
+  
+  #Calculate incidence per 100,000
+  
+  tempTotalInc <- data.frame(year = head(pg$years, -1), 
+                         best = (1e5 * tempTotalInfections /
+                           tempTotalPop)) %>%
+    tbl_df()
+  
+  
+  totalInc <- tempTotalInc %>%
+    gather("sim", "incidence", 2:ncol(tempTotalInc)) %>%
     group_by(year) %>%
-    summarise(new_infects = sum(infections),
-              total_pop = sum(total_pop)) %>%
-    mutate(incidence = new_infects / total_pop) 
+    summarise(min = min(incidence),
+              max = max(incidence)) %>%
+    ungroup() %>%
+    mutate(best = tempTotalInc$best) %>%
+    select(year, best, min, max)
   
-  annTotalInfections <- yearDf(totalInfections, "new_infects", pg$years,
-                               1, pg$timestep, midVar = "total_pop",
-                               divideVar = "incidence")
+  totalIncidencePlot <- indicatorPlot(totalInc, 
+                                      ylabel = "Incidence per 100,000",
+                                      range = FALSE, 
+                                      xlimits = c(pg$start_year, 
+                                                  pg$end_year, 20)) +
+    ggtitle("Overall incidence")
   
-  totalNewInfectionsPlot <- ggplot(data = annTotalInfections, 
-                                   aes(x = year, y = new_infects)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("New Infections") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + ggtitle("Total new infections")
+  tempPopInc <- data.frame(year = rep(head(pg$years, -1), pg$npops),
+                  population = savePops,
+                    best = (1e5 * select(tempPopInfections, -population) /
+                              tempPopPop)) %>%
+    tbl_df()
   
-  totalIncidencePlot <- ggplot(data = annTotalInfections, 
-                               aes(x = year, y = incidence * 1e5)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("Incidence per 100,000") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + ggtitle("Overall incidence")
-  
-  cumInfectionsPlot <- ggplot(data = annTotalInfections, 
-      aes(x = year, y = cumsum(new_infects))) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("New Infections") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + ggtitle("Total new infections")
-  
-  popNewInfectionsPlot <- ggplot(data = annNewInfections, 
-                        aes(x = year, y = infections, group= age_group)) +
-    geom_line(aes(color = age_group)) + 
-    xlab("Year") + ylab("New infections") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 20)) +
-    scale_colour_brewer(name = "Age Group", palette = "Set1") + 
-    plotOpts + theme(legend.position = "right") +
-    ggtitle("New infections by population")
-  
-  popIncidencePlot <- ggplot(data = annNewInfections, 
-      aes(x = year, y = incidence * 1e5, group = age_group)) + 
-    geom_line(aes(color = age_group)) + 
-    xlab("Year") + ylab("Incidence per 100,000") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 20)) +
-    scale_colour_brewer(name = "Age Group", palette = "Set1") +
-    plotOpts + theme(legend.position = "right") + 
+  popIncidencePlot <- indicatorPlot(tempPopInc, 
+                                    ylabel = "Incidence per 100,000",
+                                    xlimits = c(pg$start_year, 
+                                                pg$end_year, 20),
+                                    range = FALSE, 
+                                    groupPlot = "population") +
     ggtitle("Incidence by population")
-    
+  
   # Treatment 
-  popTreatments <- as.data.frame(t(bestResults$newTreatments)) %>%
-    mutate(year = pg$pts) %>%
-    select(year, everything()) %>%
-    gather("age_group", "treatments", 2:(pg$npops+1)) 
   
-  annPopTreatments <- yearDf(popTreatments, "treatments", pg$years,
-                             pg$npops, pg$timestep)
+  totalTreatments <- indicatorResults(pg, bestResults,
+                                      "newTreatments",
+                                      populations = "all", 
+                                      annual = "sum")
   
-  totalTreatments <- popTreatments %>%
-    group_by(year) %>%
-    summarise(treatments = sum(treatments))
+  popTreatments <- indicatorResults(pg, bestResults, 
+                                    "newTreatments", 
+                                    annual = "sum")
   
-  annTotalTreatments <- yearDf(totalTreatments, "treatments", pg$years,
-                               1, pg$timestep)
+  totalTreatmentPlot <- indicatorPlot(totalTreatments, 
+                                  ylabel = "Number initiated treatment", 
+                                  range = FALSE, 
+                                  xlimits = c(pg$start_year, 
+                                              pg$end_year, 20)) +
+    ggtitle("Overall initiated treatment")
   
-  totalTreatmentPlot <- ggplot(data = annTotalTreatments, 
-                               aes(x = year, y = treatments)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("Number initiated treatment") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + ggtitle("Overall new treatments")
+  popTreatmentPlot <- indicatorPlot(popTreatments, 
+                                ylabel = "Number initiated treatment", 
+                                xlimits = c(pg$start_year, 
+                                            pg$end_year, 20),
+                                range = FALSE, 
+                                groupPlot = "population") +
+    scale_colour_brewer(name = "Age Group", palette = "Set1",
+                        labels = c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45")) +
+    scale_fill_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", 
+                                 "Age 15 to 44", "Age > 45")) +
+    ggtitle("Initiated treatment by population")
   
-  popTreatmentPlot <- ggplot(data = annPopTreatments, 
-      aes(x = year, y = treatments, group = age_group)) + 
-    geom_line(aes(color = age_group)) + 
-    xlab("year") + ylab("Number initiated treatment") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 20)) +
-    scale_colour_brewer(name = "Age Group", palette = "Set1") +
-    plotOpts + theme(legend.position = "right") +
-    ggtitle("New treatments by population")
+  # HBV deaths 
+  totalDeaths <- indicatorResults(pg, bestResults, 
+                                  "newHBVdeaths", 
+                                  populations = "all", 
+                                  annual = "sum")
   
-  # Deaths
-  popDeaths <- as.data.frame(t(bestResults$newHBVdeaths)) %>%
-    mutate(year = pg$pts) %>%
-    select(year, everything()) %>%
-    gather("age_group", "deaths", 2:(pg$npops+1)) 
+  popDeaths <- indicatorResults(pg, bestResults, 
+                                "newHBVdeaths",
+                                annual = "sum")
   
-  annPopDeaths <- yearDf(popDeaths, "deaths", pg$years,
-                         pg$npops, pg$timestep)
+  totalDeathsPlot <- indicatorPlot(totalDeaths, 
+                                   ylabel = "Number of deaths", 
+                                   range = FALSE, 
+                                   xlimits = c(pg$start_year, 
+                                               pg$end_year, 20)) +
+    ggtitle("Overall number of deaths")
   
-  totalDeaths <- popDeaths %>%
-    group_by(year) %>%
-    summarise(deaths = sum(deaths))
-  
-  annTotalDeaths <- yearDf(totalDeaths, "deaths", pg$years,
-                           1, pg$timestep)
-  
-  totalDeathsPlot <- ggplot(data = totalDeaths, 
-                            aes(x = year, y = deaths)) +
-    geom_line(colour = "blue") +
-    xlab("Year") + ylab("Number of deaths") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year + 1, 
-                                    by = 20)) +
-    plotOpts + ggtitle("Total HBV deaths")
-  
-  popDeathsPlot <- ggplot(data = annPopDeaths, 
-                          aes(x = year, y = deaths, group = age_group)) + 
-    geom_line(aes(color = age_group)) + 
-    xlab("year") + ylab("Number of deaths") +
-    scale_x_continuous(breaks = seq(pg$start_year, pg$end_year +1, 
-                                    by = 20)) +
-    scale_colour_brewer(name = "Age Group", palette = "Set1") +
-    plotOpts + theme(legend.position = "right") + 
-    ggtitle("HBV deaths by population")
+  popDeathsPlot <- indicatorPlot(popDeaths, 
+                                    ylabel = "Number of deaths", 
+                                    xlimits = c(pg$start_year, 
+                                                pg$end_year, 20),
+                                    range = FALSE, 
+                                    groupPlot = "population") +
+    scale_colour_brewer(name = "Age Group", palette = "Set1",
+                        labels = c("Age < 4", "Age 5 to 14", 
+                                   "Age 15 to 44", "Age > 45")) +
+    scale_fill_brewer(name = "Age Group", palette = "Set1",
+                      labels = c("Age < 4", "Age 5 to 14", 
+                                 "Age 15 to 44", "Age > 45")) +
+    ggtitle("Deaths by population")
   
   # Put all plots in a grid
-  print(plot_grid(totalPopPlot, agePopPlot, totalPrevPlot,
-                  popPrevPlot, totalNewInfectionsPlot,
-                  totalIncidencePlot, cumInfectionsPlot,
+  print(plot_grid(totalPopPlot, 
+                  agePopPlot, 
+                  totalPrevPlot,
+                  popPrevPlot, 
+                  
+                  totalNewInfectionsPlot,
+                  totalCumInfectionsPlot,
                   popNewInfectionsPlot,
-                  popIncidencePlot, totalTreatmentPlot, 
-                  popTreatmentPlot, totalDeathsPlot,
-                  popDeathsPlot, ncol = 4, nrow = 4))
-  
+                  popCumInfectionsPlot,
+                  
+                  totalIncidencePlot,
+                  popIncidencePlot, 
+                  
+                  totalTreatmentPlot, 
+                  popTreatmentPlot, 
+                  
+                  totalDeathsPlot,
+                  popDeathsPlot, 
+                  ncol = 4, nrow = 4))
   
 }
