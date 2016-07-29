@@ -101,7 +101,7 @@ popSizesAge <- popResults(pg, bestResults, paramResults,
   FactorPop(popLabels)
 
 agePopPlot <- indicatorPlot(popSizesAge, ylabel = "Population size",
-                              xlimits = c(startYear, endYear, 5),
+                              xlimits = c(startYear, endYear, 10),
                             facetPlot = "population", range = TRUE)
 
 # Prevalence --------------------------------------------------
@@ -122,7 +122,7 @@ totalInfectedPlot <- indicatorPlot(totalNumInfected,
 
 popInfectedPlot <- indicatorPlot(ageNumInfected, 
                                    ylabel = "Number infected",
-                                   xlimits = c(startYear, endYear, 5),
+                                   xlimits = c(startYear, endYear, 10),
                                    range = TRUE,
                                    facetPlot = "population")
 
@@ -193,26 +193,28 @@ plotPops <- popResults(pg, bestResults, paramResults, range = TRUE) %>%
 
 allPopsPlot <- indicatorPlot(plotPops, 
                              ylabel = "Population size",
-                             xlimits = c(startYear, endYear, 10),
+                             xlimits = c(startYear, endYear, 15),
                              range = TRUE, facetPlot = "population",
                              groupPlot = "state")
 
 allStatesPlot <- indicatorPlot(plotPops, 
                              ylabel = "Population size",
-                             xlimits = c(startYear, endYear, 10),
+                             xlimits = c(startYear, endYear, 15),
                              range = TRUE, facetPlot = "state",
                              groupPlot = "population")
 
 # New infections -------------------------------------------
 
 # Annual number of new infections
-totalInfections <- indicatorResults(pg, bestResults, paramResults,
-                                  "newInfections", range = TRUE,
-                                  populations = "all", 
-                                  annual = "sum")
+totalInfections <- indicatorResults(pg, bestResults, "newInfections",
+                                    paramResults,
+                                    range = TRUE,
+                                    populations = "all", 
+                                    annual = "sum")
 
-popInfections <- indicatorResults(pg, bestResults, paramResults,
-                                  "newInfections", range = TRUE,
+popInfections <- indicatorResults(pg, bestResults, "newInfections",
+                                  paramResults,
+                                  range = TRUE,
                                   annual = "sum") %>%
   FactorPop(popLabels)
 
@@ -223,12 +225,13 @@ totalNewInfectionsPlot <- indicatorPlot(totalInfections,
 
 popNewInfectionsPlot <- indicatorPlot(popInfections, 
                                    ylabel = "New infections",
-                                   xlimits = c(startYear, endYear, 5),
+                                   xlimits = c(startYear, endYear, 10),
                                    range = TRUE,
                                    facetPlot = "population")
 # Cumulative incidence plots
-tempTotalInfections <- indicatorResults(pg, bestResults, paramResults,
-                                  "newInfections", range = FALSE,
+tempTotalInfections <- indicatorResults(pg, bestResults, "newInfections",
+                                        paramResults,
+                                  range = FALSE,
                                   populations = "all", 
                                   annual = "sum") 
   
@@ -250,9 +253,11 @@ totalCumInfectionsPlot <- indicatorPlot(totalCumInfections,
                                    xlimits = c(startYear, endYear, 5),
                                    range = TRUE)
 
-tempPopInfections <- indicatorResults(pg, bestResults, paramResults,
-                                  "newInfections", range = FALSE,
-                                  annual = "sum") %>%
+tempPopInfections <- indicatorResults(pg, bestResults, 
+                                      "newInfections", 
+                                      paramResults,
+                                      range = FALSE,
+                                      annual = "sum") %>%
   FactorPop(popLabels)
 
 bestEstimate <- tempPopInfections %>%
@@ -277,7 +282,7 @@ popCumInfections <- tempPopInfections %>%
 
 popCumInfectionsPlot <- indicatorPlot(popCumInfections, 
                                    ylabel = "Number of infections",
-                                   xlimits = c(startYear, endYear, 5),
+                                   xlimits = c(startYear, endYear, 10),
                                    range = TRUE,
                                    facetPlot = "population")
 
@@ -346,19 +351,21 @@ popInc <- tempPopInc %>%
 
 popIncidencePlot <- indicatorPlot(popInc, 
                                ylabel = "Incidence per 100,000",
-                               xlimits = c(startYear, endYear, 5),
+                               xlimits = c(startYear, endYear, 10),
                                facetPlot = "population", 
                                range = TRUE)
 
 # Treatment ------------------------------------------------------------ 
 
-totalTreatments <- indicatorResults(pg, bestResults, paramResults,
-                                  "newTreatments", range = TRUE,
-                                  populations = "all", 
-                                  annual = "sum")
+totalTreatments <- indicatorResults(pg, bestResults, "newTreatments", 
+                                    paramResults,
+                                    range = TRUE,
+                                    populations = "all", 
+                                    annual = "sum")
 
-popTreatments <- indicatorResults(pg, bestResults, paramResults,
-                                  "newTreatments", range = TRUE,
+popTreatments <- indicatorResults(pg, bestResults, "newTreatments",
+                                  paramResults,
+                                  range = TRUE,
                                   annual = "sum")
 
 totalTreatmentPlot <- indicatorPlot(totalTreatments, 
@@ -377,14 +384,17 @@ popTreatmentPlot <- indicatorPlot(popTreatments,
                                 "Age > 45"))
 
 # HBV deaths -------------------------------------------------------------
-totalDeaths <- indicatorResults(pg, bestResults, paramResults,
-                                  "newHBVdeaths", range = TRUE,
-                                  populations = "all", 
-                                  annual = "sum")
+totalDeaths <- indicatorResults(pg, bestResults, "newHBVdeaths",
+                                paramResults,
+                                range = TRUE,
+                                populations = "all", 
+                                annual = "sum")
 
-popDeaths <- indicatorResults(pg, bestResults, paramResults,
-                                  "newHBVdeaths", range = TRUE,
-                                  annual = "sum")
+popDeaths <- indicatorResults(pg, bestResults, 
+                              "newHBVdeaths",
+                              paramResults,
+                              range = TRUE,
+                              annual = "sum")
 
 totalDeathsPlot <- indicatorPlot(totalDeaths, 
   ylabel = "Number of deaths", 
@@ -438,7 +448,8 @@ if (displayPlots) {
 # Save plots separately (if required) ------------------------------------
 if (savePlots) {
   
-  figureFolder <- file.path(projectFolder, project, "results")
+  figureFolder <- file.path(projectFolder, project, "results", 
+                         paste0("results_", resultsTime))
   
   SaveFigure(figureFolder, "total_population", totalPopPlot)
   SaveFigure(figureFolder, "age_group_population", agePopPlot)
@@ -561,7 +572,7 @@ popCumInfectionsPlot
 totalIncidencePlot
 ```
 
-**Figure 14* - Incidence per 100,000 people by age group.
+**Figure 14** - Incidence per 100,000 people by age group.
 
 ```{r Insert figure 14, include = TRUE}
 popIncidencePlot

@@ -130,17 +130,17 @@ HBVmodel <- function(pg, pm, initialPop, pts, transitions,
   
   vac_avail[years >= 1985] <- pm$vacc_tog[1]
   vac_prog_0[years >= 2000] <- 1
-  vac_prog_1[(years >= 1998) & (years < 2012)] <- 1 
+  vac_prog_1[(pts >= 1998) & (pts < 2012)] <- 1 
   
   vac <- matrix(0, ncol = npts + 1, nrow = npops)
-  vac[0, ] <- pm$vac_eff_0 * pm$vac_prop_0 * vac_prog_0 *
-    0 * vac_avail #age group 0 to 4
-  vac[1, ] <- pm$vac_eff_1 * pm$vac_prop_1 * vac_prog_1 * 
-    1 * vac_avail #age group 5 to 14
-  vac[2, ] <- pm$vac_eff_2 * pm$vac_prop_2 * 
-    2 * vac_avail #age group 15 to 44
-  vac[3, ] <- pm$vac_eff_3 * pm$vac_prop_3 *
-    3 * vac_avail #age group 45 
+  vac[1, ] <- pm$vac_eff_0 * pm$vac_prop_0 * vac_prog_0 *
+    vac_avail #age group 0 to 4
+  vac[2, ] <- pm$vac_eff_1 * pm$vac_prop_1 * vac_prog_1 * 
+    vac_avail #age group 5 to 14
+  vac[3, ] <- pm$vac_eff_2 * pm$vac_prop_2 * 
+    vac_avail #age group 15 to 44
+  vac[4, ] <- pm$vac_eff_3 * pm$vac_prop_3 *
+    vac_avail #age group 45 
   
   vac <- vac * dt # Convert annual to timestep. 
                   # Note only rate is the proportion 
